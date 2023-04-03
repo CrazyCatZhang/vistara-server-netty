@@ -34,6 +34,11 @@
         <feign.version>8.18.0</feign.version>
     </properties>
 
+    <modules>
+        <module>common</module>
+        <module>service</module>
+    </modules>
+
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
