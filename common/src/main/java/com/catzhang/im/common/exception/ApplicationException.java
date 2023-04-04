@@ -1,6 +1,9 @@
 package com.catzhang.im.common.exception;
 
 
+/**
+ * @author crazycatzhang
+ */
 public class ApplicationException extends RuntimeException {
 
     private int code;

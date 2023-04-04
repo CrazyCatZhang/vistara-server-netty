@@ -3,6 +3,9 @@ package com.catzhang.im.service.user.dao;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
+/**
+ * @author crazycatzhang
+ */
 @Data
 @TableName("im_user_data")
 public class UserDataEntity {

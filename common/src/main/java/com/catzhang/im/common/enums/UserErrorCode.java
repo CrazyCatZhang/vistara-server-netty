@@ -2,6 +2,10 @@ package com.catzhang.im.common.enums;
 
 import com.catzhang.im.common.exception.ApplicationExceptionEnum;
 
+/**
+ * @author crazycatzhang
+ */
+
 public enum UserErrorCode implements ApplicationExceptionEnum {
     IMPORT_SIZE_BEYOND(20000, "导入數量超出上限"),
     USER_IS_NOT_EXIST(20001, "用户不存在"),
@@ -18,10 +22,12 @@ public enum UserErrorCode implements ApplicationExceptionEnum {
         this.error = error;
     }
 
+    @Override
     public int getCode() {
         return this.code;
     }
 
+    @Override
     public String getError() {
         return this.error;
     }

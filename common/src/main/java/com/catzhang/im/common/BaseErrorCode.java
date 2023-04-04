@@ -4,6 +4,10 @@ package com.catzhang.im.common;
 import com.catzhang.im.common.exception.ApplicationExceptionEnum;
 
 
+/**
+ * @author crazycatzhang
+ */
+
 public enum BaseErrorCode implements ApplicationExceptionEnum {
 
     SUCCESS(200, "success"),
@@ -19,10 +23,12 @@ public enum BaseErrorCode implements ApplicationExceptionEnum {
         this.error = error;
     }
 
+    @Override
     public int getCode() {
         return this.code;
     }
 
+    @Override
     public String getError() {
         return this.error;
     }
