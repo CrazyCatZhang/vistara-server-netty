@@ -4,17 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.DelFlagEnum;
 import com.catzhang.im.common.enums.UserErrorCode;
+import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
-import com.catzhang.im.service.user.model.req.DeleteUserReq;
-import com.catzhang.im.service.user.model.req.GetUserInfoReq;
-import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
-import com.catzhang.im.service.user.model.req.ImportUserReq;
-import com.catzhang.im.service.user.model.resp.DeleteUserResp;
-import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
-import com.catzhang.im.service.user.model.resp.GetUserSequenceResp;
-import com.catzhang.im.service.user.model.resp.ImportUserResp;
+import com.catzhang.im.service.user.model.req.*;
+import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -134,5 +130,30 @@ public class UserServiceImpl implements UserService {
         getUserSequenceResp.setUserDataEntity(userDataEntity);
 
         return ResponseVO.successResponse(getUserSequenceResp);
+    }
+
+    @Override
+    public ResponseVO<ModifyUserInfoResp> modifyUserInfo(ModifyUserInfoReq req) {
+        LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(UserDataEntity::getAppId, req.getAppId())
+                .like(UserDataEntity::getUserId, req.getUserId());
+
+        UserDataEntity userDataEntity = userDataMapper.selectOne(lambdaQueryWrapper);
+        if (userDataEntity == null) {
+            throw new ApplicationException(UserErrorCode.USER_IS_NOT_EXIST);
+        }
+
+        BeanUtils.copyProperties(req, userDataEntity);
+
+        int update = userDataMapper.update(userDataEntity, lambdaQueryWrapper);
+
+        ModifyUserInfoResp modifyUserInfoResp = new ModifyUserInfoResp();
+
+        if (update == 1) {
+            modifyUserInfoResp.setUserDataEntity(userDataEntity);
+            return ResponseVO.successResponse(modifyUserInfoResp);
+        }
+
+        throw new ApplicationException(UserErrorCode.MODIFY_USER_ERROR);
     }
 }
