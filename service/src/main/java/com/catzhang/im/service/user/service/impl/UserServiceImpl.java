@@ -71,7 +71,7 @@ public class UserServiceImpl implements UserService {
             LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
             lambdaQueryWrapper.like(UserDataEntity::getUserId, userId)
                     .like(UserDataEntity::getAppId, req.getAppId());
-            int delete = 0;
+            int delete;
             try {
                 delete = userDataMapper.delete(lambdaQueryWrapper);
                 if (delete > 0) {
