@@ -8,9 +8,11 @@ import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
 import com.catzhang.im.service.user.model.req.DeleteUserReq;
 import com.catzhang.im.service.user.model.req.GetUserInfoReq;
+import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
 import com.catzhang.im.service.user.model.req.ImportUserReq;
 import com.catzhang.im.service.user.model.resp.DeleteUserResp;
 import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
+import com.catzhang.im.service.user.model.resp.GetUserSequenceResp;
 import com.catzhang.im.service.user.model.resp.ImportUserResp;
 import com.catzhang.im.service.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -116,5 +118,21 @@ public class UserServiceImpl implements UserService {
         return ResponseVO.successResponse(getUserInfoResp);
     }
 
+    @Override
+    public ResponseVO<GetUserSequenceResp> getUserSequence(GetUserSequenceReq req) {
+        LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(UserDataEntity::getUserId, req.getUserId())
+                .like(UserDataEntity::getAppId, req.getAppId());
 
+        UserDataEntity userDataEntity = userDataMapper.selectOne(lambdaQueryWrapper);
+
+        if (userDataEntity == null) {
+            return ResponseVO.errorResponse(UserErrorCode.USER_IS_NOT_EXIST);
+        }
+
+        GetUserSequenceResp getUserSequenceResp = new GetUserSequenceResp();
+        getUserSequenceResp.setUserDataEntity(userDataEntity);
+
+        return ResponseVO.successResponse(getUserSequenceResp);
+    }
 }

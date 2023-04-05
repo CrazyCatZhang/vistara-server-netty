@@ -3,9 +3,11 @@ package com.catzhang.im.service.user.controller;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.user.model.req.DeleteUserReq;
 import com.catzhang.im.service.user.model.req.GetUserInfoReq;
+import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
 import com.catzhang.im.service.user.model.req.ImportUserReq;
 import com.catzhang.im.service.user.model.resp.DeleteUserResp;
 import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
+import com.catzhang.im.service.user.model.resp.GetUserSequenceResp;
 import com.catzhang.im.service.user.model.resp.ImportUserResp;
 import com.catzhang.im.service.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,4 +38,10 @@ public class UserController {
     public ResponseVO<GetUserInfoResp> getUserInfo(@RequestBody GetUserInfoReq req) {
         return userService.getUserInfo(req);
     }
+
+    @GetMapping("getUserSequence")
+    public ResponseVO<GetUserSequenceResp> getUserSequence(@RequestBody GetUserSequenceReq req) {
+        return userService.getUserSequence(req);
+    }
+
 }
