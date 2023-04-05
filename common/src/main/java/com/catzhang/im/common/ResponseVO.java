@@ -58,7 +58,7 @@ public class ResponseVO<T> {
         return this;
     }
 
-    public ResponseVO success(T data) {
+    public ResponseVO<T> success(T data) {
         this.code = 200;
         this.msg = "success";
         this.data = data;

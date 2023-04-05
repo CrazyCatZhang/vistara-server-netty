@@ -7,15 +7,19 @@ import com.catzhang.im.common.enums.UserErrorCode;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
 import com.catzhang.im.service.user.model.req.DeleteUserReq;
+import com.catzhang.im.service.user.model.req.GetUserInfoReq;
 import com.catzhang.im.service.user.model.req.ImportUserReq;
 import com.catzhang.im.service.user.model.resp.DeleteUserResp;
+import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
 import com.catzhang.im.service.user.model.resp.ImportUserResp;
 import com.catzhang.im.service.user.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author crazycatzhang
@@ -27,7 +31,7 @@ public class UserServiceImpl implements UserService {
     UserDataMapper userDataMapper;
 
     @Override
-    public ResponseVO importUser(ImportUserReq req) {
+    public ResponseVO<ImportUserResp> importUser(ImportUserReq req) {
 
         if (req.getUserData().size() > 100) {
             return ResponseVO.errorResponse(UserErrorCode.IMPORT_SIZE_BEYOND);
@@ -57,7 +61,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseVO deleteUser(DeleteUserReq req) {
+    public ResponseVO<DeleteUserResp> deleteUser(DeleteUserReq req) {
         UserDataEntity userDataEntity = new UserDataEntity();
         userDataEntity.setDelFlag(DelFlagEnum.DELETE.getCode());
 
@@ -89,5 +93,28 @@ public class UserServiceImpl implements UserService {
 
         return ResponseVO.successResponse(deleteUserResp);
     }
+
+    @Override
+    public ResponseVO<GetUserInfoResp> getUserInfo(GetUserInfoReq req) {
+        LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.in(UserDataEntity::getUserId, req.getUserIds())
+                .like(UserDataEntity::getAppId, req.getAppId());
+
+        List<UserDataEntity> userDataEntities = userDataMapper.selectList(lambdaQueryWrapper);
+        Map<String, UserDataEntity> userDataMap = new HashMap<>();
+
+        userDataEntities.forEach(userDataEntity -> userDataMap.put(userDataEntity.getUserId(), userDataEntity));
+        List<String> failUser = new ArrayList<>();
+        req.getUserIds().forEach(uid -> {
+            if (!userDataMap.containsKey(uid)) {
+                failUser.add(uid);
+            }
+        });
+        GetUserInfoResp getUserInfoResp = new GetUserInfoResp();
+        getUserInfoResp.setUserDataItems(userDataEntities);
+        getUserInfoResp.setFailUser(failUser);
+        return ResponseVO.successResponse(getUserInfoResp);
+    }
+
 
 }
