@@ -1,5 +1,6 @@
 package com.catzhang.im.service.user.dao;
 
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -49,6 +50,7 @@ public class UserDataEntity {
 
     private Integer appId;
 
+    @TableLogic
     private Integer delFlag;
 
     private String extra;
