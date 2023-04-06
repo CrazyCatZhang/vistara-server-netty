@@ -93,7 +93,9 @@ public class FriendShipServiceImpl implements FriendShipService {
             HandleAddFriendShipReq handleAddFriendShipReq = new HandleAddFriendShipReq();
             BeanUtils.copyProperties(req, handleAddFriendShipReq);
             ResponseVO<HandleAddFriendShipResp> handleAddFriendShipRespResponseVO = this.handleAddFriendShip(handleAddFriendShipReq);
-            //这里空指针异常，要处理！！！！
+            if (!handleAddFriendShipRespResponseVO.isOk()) {
+                return ResponseVO.errorResponse(handleAddFriendShipRespResponseVO.getCode(), handleAddFriendShipRespResponseVO.getMsg());
+            }
             addFriendShipResp.setFriendShipEntity(handleAddFriendShipRespResponseVO.getData().getFriendShipEntities());
             return ResponseVO.successResponse(addFriendShipResp);
         } else {
