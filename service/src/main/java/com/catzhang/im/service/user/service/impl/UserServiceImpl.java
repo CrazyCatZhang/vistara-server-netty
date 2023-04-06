@@ -2,7 +2,7 @@ package com.catzhang.im.service.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.common.enums.DelFlagEnum;
+import com.catzhang.im.common.enums.DelFlag;
 import com.catzhang.im.common.enums.UserErrorCode;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.user.dao.UserDataEntity;
@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseVO<DeleteUserResp> deleteUser(DeleteUserReq req) {
         UserDataEntity userDataEntity = new UserDataEntity();
-        userDataEntity.setDelFlag(DelFlagEnum.DELETE.getCode());
+        userDataEntity.setDelFlag(DelFlag.DELETE.getCode());
 
         List<String> successIds = new ArrayList<>();
         List<String> errorIds = new ArrayList<>();

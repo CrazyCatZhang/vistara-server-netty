@@ -4,7 +4,7 @@ package com.catzhang.im.common.enums;
  * @author crazycatzhang
  */
 
-public enum DelFlagEnum {
+public enum DelFlag {
     NORMAL(0),
 
     DELETE(1),
@@ -12,7 +12,7 @@ public enum DelFlagEnum {
 
     private int code;
 
-    DelFlagEnum(int code) {
+    DelFlag(int code) {
         this.code = code;
     }
 

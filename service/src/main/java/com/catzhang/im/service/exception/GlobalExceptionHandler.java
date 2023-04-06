@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -26,7 +27,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = Exception.class)
     @ResponseBody
-    public ResponseVO unknowException(Exception e) {
+    public ResponseVO unKnowException(Exception e) {
         e.printStackTrace();
         ResponseVO resultBean = new ResponseVO();
         resultBean.setCode(BaseErrorCode.SYSTEM_ERROR.getCode());
@@ -84,13 +85,12 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public Object handleException2(BindException ex) {
         FieldError err = ex.getFieldError();
-        String message = "参数{".concat(err.getField()).concat("}").concat(err.getDefaultMessage());
+        assert err != null;
+        String message = "参数{".concat(err.getField()).concat("}").concat(Objects.requireNonNull(err.getDefaultMessage()));
         ResponseVO resultBean = new ResponseVO();
         resultBean.setCode(BaseErrorCode.PARAMETER_ERROR.getCode());
         resultBean.setMsg(message);
         return resultBean;
-
-
     }
 
     //json格式
@@ -109,5 +109,4 @@ public class GlobalExceptionHandler {
         resultBean.setMsg(BaseErrorCode.PARAMETER_ERROR.getError() + " : " + errorMsg.toString());
         return resultBean;
     }
-
 }
