@@ -1,12 +1,8 @@
 package com.catzhang.im.service.friendship.service;
 
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipReq;
-import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipReq;
-import com.catzhang.im.service.friendship.model.req.ImportFriendShipReq;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipResp;
-import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipResp;
-import com.catzhang.im.service.friendship.model.resp.ImportFriendShipResp;
+import com.catzhang.im.service.friendship.model.req.*;
+import com.catzhang.im.service.friendship.model.resp.*;
 
 /**
  * @author crazycatzhang
@@ -17,4 +13,8 @@ public interface FriendShipService {
     ResponseVO<AddFriendShipResp> addFriendShip(AddFriendShipReq req);
 
     ResponseVO<HandleAddFriendShipResp> handleAddFriendShip(HandleAddFriendShipReq req);
+
+    ResponseVO<UpdateFriendShipResp> updateFriendShip(UpdateFriendShipReq req);
+
+    ResponseVO<HandleUpdateFriendShipResp> handleUpdateFriendShip(HandleUpdateFriendShipReq req);
 }

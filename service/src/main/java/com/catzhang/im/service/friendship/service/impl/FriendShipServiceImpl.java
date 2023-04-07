@@ -1,19 +1,15 @@
 package com.catzhang.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.AllowFriendType;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.enums.FriendShipStatus;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipReq;
-import com.catzhang.im.service.friendship.model.req.FriendDto;
-import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipReq;
-import com.catzhang.im.service.friendship.model.req.ImportFriendShipReq;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipResp;
-import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipResp;
-import com.catzhang.im.service.friendship.model.resp.ImportFriendShipResp;
+import com.catzhang.im.service.friendship.model.req.*;
+import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
@@ -126,7 +122,6 @@ public class FriendShipServiceImpl implements FriendShipService {
             }
         } else {
             if (fromItem.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
-                System.out.println("1111111111111111111111111111");
                 return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
             } else {
                 FriendDto toItem = req.getToItem();
@@ -178,5 +173,57 @@ public class FriendShipServiceImpl implements FriendShipService {
         friendShipEntities.add(toItem);
         handleAddFriendShipResp.setFriendShipEntities(friendShipEntities);
         return ResponseVO.successResponse(handleAddFriendShipResp);
+    }
+
+    @Override
+    public ResponseVO<UpdateFriendShipResp> updateFriendShip(UpdateFriendShipReq req) {
+        GetUserSequenceReq getUserSequenceReq = new GetUserSequenceReq();
+        getUserSequenceReq.setAppId(req.getAppId());
+        getUserSequenceReq.setUserId(req.getFromId());
+        ResponseVO<GetUserSequenceResp> fromItem = userService.getUserSequence(getUserSequenceReq);
+        if (!fromItem.isOk()) {
+            return ResponseVO.errorResponse(fromItem.getCode(), fromItem.getMsg());
+        }
+        getUserSequenceReq.setUserId(req.getToItem().getToId());
+        ResponseVO<GetUserSequenceResp> toItem = userService.getUserSequence(getUserSequenceReq);
+        if (!toItem.isOk()) {
+            return ResponseVO.errorResponse(toItem.getCode(), toItem.getMsg());
+        }
+
+        HandleUpdateFriendShipReq handleUpdateFriendShipReq = new HandleUpdateFriendShipReq();
+        BeanUtils.copyProperties(req, handleUpdateFriendShipReq);
+        ResponseVO<HandleUpdateFriendShipResp> handleUpdateFriendShipRespResponseVO = this.handleUpdateFriendShip(handleUpdateFriendShipReq);
+        if (!handleUpdateFriendShipRespResponseVO.isOk()) {
+            return ResponseVO.errorResponse(handleUpdateFriendShipRespResponseVO.getCode(), handleUpdateFriendShipRespResponseVO.getMsg());
+        }
+
+        UpdateFriendShipResp updateFriendShipResp = new UpdateFriendShipResp();
+        updateFriendShipResp.setFriendShipEntity(handleUpdateFriendShipRespResponseVO.getData().getFriendShipEntity());
+        return ResponseVO.successResponse(updateFriendShipResp);
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<HandleUpdateFriendShipResp> handleUpdateFriendShip(HandleUpdateFriendShipReq req) {
+        LambdaUpdateWrapper<FriendShipEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getToId, req.getToItem().getToId())
+                .set(FriendShipEntity::getAddSource, req.getToItem().getAddSource())
+                .set(FriendShipEntity::getExtra, req.getToItem().getExtra())
+                .set(FriendShipEntity::getRemark, req.getToItem().getRemark());
+        int update = friendShipMapper.update(null, lambdaUpdateWrapper);
+        if (update == 1) {
+            LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                    .like(FriendShipEntity::getFromId, req.getFromId())
+                    .like(FriendShipEntity::getToId, req.getToItem().getToId());
+            FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
+            HandleUpdateFriendShipResp handleUpdateFriendShipResp = new HandleUpdateFriendShipResp();
+            handleUpdateFriendShipResp.setFriendShipEntity(friendShipEntity);
+            return ResponseVO.successResponse(handleUpdateFriendShipResp);
+        }
+
+        return ResponseVO.errorResponse();
     }
 }
