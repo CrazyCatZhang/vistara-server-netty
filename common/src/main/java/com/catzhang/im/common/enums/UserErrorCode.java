@@ -14,8 +14,8 @@ public enum UserErrorCode implements ApplicationExceptionEnum {
     SERVER_NOT_AVAILABLE(71000, "没有可用的服务"),
     ;
 
-    private int code;
-    private String error;
+    private final int code;
+    private final String error;
 
     UserErrorCode(int code, String error) {
         this.code = code;

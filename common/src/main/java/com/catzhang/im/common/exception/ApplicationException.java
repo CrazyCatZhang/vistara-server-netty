@@ -6,9 +6,9 @@ package com.catzhang.im.common.exception;
  */
 public class ApplicationException extends RuntimeException {
 
-    private int code;
+    private final int code;
 
-    private String error;
+    private final String error;
 
     public ApplicationException(int code, String message) {
         super(message);

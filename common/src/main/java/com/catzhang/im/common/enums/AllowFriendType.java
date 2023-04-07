@@ -17,7 +17,7 @@ public enum AllowFriendType {
     ;
 
 
-    private int code;
+    private final int code;
 
     AllowFriendType(int code) {
         this.code = code;

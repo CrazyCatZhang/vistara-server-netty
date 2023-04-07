@@ -15,8 +15,8 @@ public enum BaseErrorCode implements ApplicationExceptionEnum {
     PARAMETER_ERROR(90001, "参数校验错误"),
     ;
 
-    private int code;
-    private String error;
+    private final int code;
+    private final String error;
 
     BaseErrorCode(int code, String error) {
         this.code = code;

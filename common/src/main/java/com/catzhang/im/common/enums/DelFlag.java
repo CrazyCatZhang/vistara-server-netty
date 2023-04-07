@@ -10,7 +10,7 @@ public enum DelFlag {
     DELETE(1),
     ;
 
-    private int code;
+    private final int code;
 
     DelFlag(int code) {
         this.code = code;

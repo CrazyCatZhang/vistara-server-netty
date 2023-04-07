@@ -39,8 +39,8 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     YOU_HAVE_NOT_FRIEND_SHIP(30017, "你还没有添加过好友");
 
-    private int code;
-    private String error;
+    private final int code;
+    private final String error;
 
     FriendShipErrorCode(int code, String error) {
         this.code = code;

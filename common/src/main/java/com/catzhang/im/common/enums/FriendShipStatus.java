@@ -22,7 +22,7 @@ public enum FriendShipStatus {
     BLACK_STATUS_BLACKED(2),
     ;
 
-    private int code;
+    private final int code;
 
     FriendShipStatus(int code) {
         this.code = code;
