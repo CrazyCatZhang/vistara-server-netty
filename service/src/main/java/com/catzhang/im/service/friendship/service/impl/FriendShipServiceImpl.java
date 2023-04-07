@@ -267,4 +267,18 @@ public class FriendShipServiceImpl implements FriendShipService {
         deleteAllFriendShipResp.setFriendShipEntities(friendShipEntities);
         return ResponseVO.successResponse(deleteAllFriendShipResp);
     }
+
+    @Override
+    public ResponseVO<GetAllFriendShipResp> getAllFriendShip(GetAllFriendShipReq req) {
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId());
+        List<FriendShipEntity> friendShipEntities = friendShipMapper.selectList(lambdaQueryWrapper);
+        if (friendShipEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.YOU_HAVE_NOT_FRIEND_SHIP);
+        }
+        GetAllFriendShipResp getAllFriendShipResp = new GetAllFriendShipResp();
+        getAllFriendShipResp.setFriendShipEntities(friendShipEntities);
+        return ResponseVO.successResponse(getAllFriendShipResp);
+    }
 }

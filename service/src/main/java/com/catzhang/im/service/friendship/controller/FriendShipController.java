@@ -42,4 +42,9 @@ public class FriendShipController {
     public ResponseVO<DeleteAllFriendShipResp> deleteAllFriendShip(@RequestBody @Validated DeleteAllFriendShipReq req) {
         return friendShipService.deleteAllFriendShip(req);
     }
+
+    @GetMapping("getAll")
+    public ResponseVO<GetAllFriendShipResp> getAllFriendShip(@RequestBody @Validated GetAllFriendShipReq req) {
+        return friendShipService.getAllFriendShip(req);
+    }
 }
