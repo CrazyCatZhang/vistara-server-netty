@@ -52,4 +52,9 @@ public class FriendShipController {
     public ResponseVO<GetRelationResp> getRealation(@RequestBody @Validated GetRelationReq req) {
         return friendShipService.getRelation(req);
     }
+
+    @GetMapping("verify")
+    public ResponseVO<VerifyFriendShipResp> verifyFriendShip(@RequestBody @Validated VerifyFriendShipReq req) {
+        return friendShipService.verifyFriendShip(req);
+    }
 }

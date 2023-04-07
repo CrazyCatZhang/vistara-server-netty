@@ -6,6 +6,7 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.AllowFriendType;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.enums.FriendShipStatus;
+import com.catzhang.im.common.enums.VerifyFriendshipType;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.req.*;
@@ -293,5 +294,13 @@ public class FriendShipServiceImpl implements FriendShipService {
             return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_NOT_YOUR_FRIEND);
         }
         return ResponseVO.successResponse(new GetRelationResp(friendShipEntity));
+    }
+
+    @Override
+    public ResponseVO<VerifyFriendShipResp> verifyFriendShip(VerifyFriendShipReq req) {
+        if (req.getCheckType() == VerifyFriendshipType.SINGLE.getType()) {
+            return ResponseVO.successResponse(friendShipMapper.checkFriendShip(req));
+        }
+        return null;
     }
 }
