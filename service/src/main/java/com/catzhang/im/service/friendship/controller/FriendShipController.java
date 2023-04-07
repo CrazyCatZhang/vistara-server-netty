@@ -47,4 +47,9 @@ public class FriendShipController {
     public ResponseVO<GetAllFriendShipResp> getAllFriendShip(@RequestBody @Validated GetAllFriendShipReq req) {
         return friendShipService.getAllFriendShip(req);
     }
+
+    @GetMapping("getRelation")
+    public ResponseVO<GetRelationResp> getRealation(@RequestBody @Validated GetRelationReq req) {
+        return friendShipService.getRelation(req);
+    }
 }

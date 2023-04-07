@@ -281,4 +281,17 @@ public class FriendShipServiceImpl implements FriendShipService {
         getAllFriendShipResp.setFriendShipEntities(friendShipEntities);
         return ResponseVO.successResponse(getAllFriendShipResp);
     }
+
+    @Override
+    public ResponseVO<GetRelationResp> getRelation(GetRelationReq req) {
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getToId, req.getToId());
+        FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
+        if (friendShipEntity == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_NOT_YOUR_FRIEND);
+        }
+        return ResponseVO.successResponse(new GetRelationResp(friendShipEntity));
+    }
 }

@@ -23,4 +23,6 @@ public interface FriendShipService {
     ResponseVO<DeleteAllFriendShipResp> deleteAllFriendShip(DeleteAllFriendShipReq req);
 
     ResponseVO<GetAllFriendShipResp> getAllFriendShip(GetAllFriendShipReq req);
+
+    ResponseVO<GetRelationResp> getRelation(GetRelationReq req);
 }
