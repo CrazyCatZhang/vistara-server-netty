@@ -248,4 +248,23 @@ public class FriendShipServiceImpl implements FriendShipService {
         deleteFriendShipResp.setFriendShipEntity(friendShipEntity);
         return ResponseVO.successResponse(deleteFriendShipResp);
     }
+
+    @Override
+    public ResponseVO<DeleteAllFriendShipResp> deleteAllFriendShip(DeleteAllFriendShipReq req) {
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getStatus, FriendShipStatus.FRIEND_STATUS_NORMAL.getCode());
+        List<FriendShipEntity> friendShipEntities = friendShipMapper.selectList(lambdaQueryWrapper);
+        if (friendShipEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_IS_DELETED);
+        }
+        friendShipEntities.forEach(item -> item.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode()));
+        FriendShipEntity update = new FriendShipEntity();
+        update.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
+        friendShipMapper.update(update, lambdaQueryWrapper);
+        DeleteAllFriendShipResp deleteAllFriendShipResp = new DeleteAllFriendShipResp();
+        deleteAllFriendShipResp.setFriendShipEntities(friendShipEntities);
+        return ResponseVO.successResponse(deleteAllFriendShipResp);
+    }
 }
