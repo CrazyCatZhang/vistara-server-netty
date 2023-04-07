@@ -226,4 +226,26 @@ public class FriendShipServiceImpl implements FriendShipService {
 
         return ResponseVO.errorResponse();
     }
+
+    @Override
+    public ResponseVO<DeleteFriendShipResp> deleteFriendShip(DeleteFriendShipReq req) {
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getToId, req.getToId());
+        FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
+        if (friendShipEntity == null) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_NOT_YOUR_FRIEND);
+        } else {
+            if (friendShipEntity.getStatus() != null && friendShipEntity.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
+                friendShipEntity.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
+                friendShipMapper.update(friendShipEntity, lambdaQueryWrapper);
+            } else {
+                return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_IS_DELETED);
+            }
+        }
+        DeleteFriendShipResp deleteFriendShipResp = new DeleteFriendShipResp();
+        deleteFriendShipResp.setFriendShipEntity(friendShipEntity);
+        return ResponseVO.successResponse(deleteFriendShipResp);
+    }
 }

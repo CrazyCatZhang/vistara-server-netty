@@ -17,4 +17,6 @@ public interface FriendShipService {
     ResponseVO<UpdateFriendShipResp> updateFriendShip(UpdateFriendShipReq req);
 
     ResponseVO<HandleUpdateFriendShipResp> handleUpdateFriendShip(HandleUpdateFriendShipReq req);
+
+    ResponseVO<DeleteFriendShipResp> deleteFriendShip(DeleteFriendShipReq req);
 }
