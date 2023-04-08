@@ -3,10 +3,7 @@ package com.catzhang.im.service.friendship.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.common.enums.AllowFriendType;
-import com.catzhang.im.common.enums.FriendShipErrorCode;
-import com.catzhang.im.common.enums.FriendShipStatus;
-import com.catzhang.im.common.enums.VerifyFriendshipType;
+import com.catzhang.im.common.enums.*;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.req.*;
@@ -24,6 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author crazycatzhang
@@ -297,10 +297,44 @@ public class FriendShipServiceImpl implements FriendShipService {
     }
 
     @Override
-    public ResponseVO<VerifyFriendShipResp> verifyFriendShip(VerifyFriendShipReq req) {
+    public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(VerifyFriendShipReq req) {
+
+        Map<String, Integer> result = req.getToIds().stream().collect(Collectors.toMap(Function.identity(), s -> 0));
+
+        List<VerifyFriendShipResp> resp;
+
         if (req.getCheckType() == VerifyFriendshipType.SINGLE.getType()) {
-            return ResponseVO.successResponse(friendShipMapper.checkFriendShip(req));
+            resp = friendShipMapper.verifyFriendShip(req);
+            resp.forEach(item -> {
+                item.setMessage(item.getStatus() == VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getStatus() ? VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getMessage() : VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_NO_RELATIONSHIP.getMessage());
+            });
+        } else {
+            resp = friendShipMapper.verifyBidirectionalFriendShip(req);
+            resp.forEach(item -> {
+                if (item.getStatus() == 1) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getMessage());
+                } else if (item.getStatus() == 2) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_RESULT_IS_A_ADDS_B.getMessage());
+                } else if (item.getStatus() == 3) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_RESULT_IS_B_ADDS_A.getMessage());
+                } else {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_RESULT_IS_NO_RELATIONSHIP.getMessage());
+                }
+            });
         }
-        return null;
+
+        Map<String, Integer> collect = resp.stream().collect(Collectors.toMap(VerifyFriendShipResp::getToId, VerifyFriendShipResp::getStatus));
+        result.keySet().forEach(toId -> {
+            if (!collect.containsKey(toId)) {
+                VerifyFriendShipResp verifyFriendShipResp = new VerifyFriendShipResp();
+                verifyFriendShipResp.setFromId(req.getFromId());
+                verifyFriendShipResp.setToId(toId);
+                verifyFriendShipResp.setStatus(0);
+                verifyFriendShipResp.setMessage(VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_NO_RELATIONSHIP.getMessage());
+                resp.add(verifyFriendShipResp);
+            }
+        });
+
+        return ResponseVO.successResponse(resp);
     }
 }

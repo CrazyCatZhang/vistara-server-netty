@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * @author crazycatzhang
  */
@@ -54,7 +56,7 @@ public class FriendShipController {
     }
 
     @GetMapping("verify")
-    public ResponseVO<VerifyFriendShipResp> verifyFriendShip(@RequestBody @Validated VerifyFriendShipReq req) {
+    public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(@RequestBody @Validated VerifyFriendShipReq req) {
         return friendShipService.verifyFriendShip(req);
     }
 }

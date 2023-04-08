@@ -4,6 +4,8 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 
+import java.util.List;
+
 /**
  * @author crazycatzhang
  */
@@ -26,5 +28,5 @@ public interface FriendShipService {
 
     ResponseVO<GetRelationResp> getRelation(GetRelationReq req);
 
-    ResponseVO<VerifyFriendShipResp> verifyFriendShip(VerifyFriendShipReq req);
+    ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(VerifyFriendShipReq req);
 }
