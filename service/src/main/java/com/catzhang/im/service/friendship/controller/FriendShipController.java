@@ -64,4 +64,9 @@ public class FriendShipController {
     public ResponseVO<AddFriendShipBlackResp> addFriendShipBlack(@RequestBody @Validated AddFriendShipBlackReq req) {
         return friendShipService.blackFriendShip(req);
     }
+
+    @PutMapping("deleteBlack")
+    public ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(@RequestBody @Validated DeleteFriendShipBlackReq req) {
+        return friendShipService.deleteFriendShipBlack(req);
+    }
 }

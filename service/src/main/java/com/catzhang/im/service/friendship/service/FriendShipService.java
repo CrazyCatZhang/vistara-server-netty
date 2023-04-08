@@ -31,4 +31,6 @@ public interface FriendShipService {
     ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(VerifyFriendShipReq req);
 
     ResponseVO<AddFriendShipBlackResp> blackFriendShip(AddFriendShipBlackReq req);
+
+    ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(DeleteFriendShipBlackReq req);
 }

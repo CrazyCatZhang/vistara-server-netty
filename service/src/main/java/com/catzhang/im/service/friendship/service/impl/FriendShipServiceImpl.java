@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.*;
+import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.req.*;
@@ -383,5 +384,23 @@ public class FriendShipServiceImpl implements FriendShipService {
         AddFriendShipBlackResp addFriendShipBlackResp = new AddFriendShipBlackResp();
         addFriendShipBlackResp.setBlackShipEntity(fromItem);
         return ResponseVO.successResponse(addFriendShipBlackResp);
+    }
+
+    @Override
+    public ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(DeleteFriendShipBlackReq req) {
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getToId, req.getToId());
+        FriendShipEntity fromItem = friendShipMapper.selectOne(lambdaQueryWrapper);
+        if (fromItem.getBlack() != null && fromItem.getBlack() == FriendShipStatus.BLACK_STATUS_NORMAL.getCode()) {
+            throw new ApplicationException(FriendShipErrorCode.FRIEND_IS_NOT_YOUR_BLACK);
+        }
+        fromItem.setBlack(FriendShipStatus.BLACK_STATUS_NORMAL.getCode());
+        int update = friendShipMapper.update(fromItem, lambdaQueryWrapper);
+        if (update != 1) {
+            return ResponseVO.errorResponse();
+        }
+        return ResponseVO.successResponse(new DeleteFriendShipBlackResp(fromItem));
     }
 }
