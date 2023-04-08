@@ -29,4 +29,6 @@ public interface FriendShipService {
     ResponseVO<GetRelationResp> getRelation(GetRelationReq req);
 
     ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(VerifyFriendShipReq req);
+
+    ResponseVO<AddFriendShipBlackResp> blackFriendShip(AddFriendShipBlackReq req);
 }

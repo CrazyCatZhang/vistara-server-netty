@@ -59,4 +59,9 @@ public class FriendShipController {
     public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(@RequestBody @Validated VerifyFriendShipReq req) {
         return friendShipService.verifyFriendShip(req);
     }
+
+    @PutMapping("black")
+    public ResponseVO<AddFriendShipBlackResp> addFriendShipBlack(@RequestBody @Validated AddFriendShipBlackReq req) {
+        return friendShipService.blackFriendShip(req);
+    }
 }

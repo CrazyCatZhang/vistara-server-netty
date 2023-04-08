@@ -337,4 +337,51 @@ public class FriendShipServiceImpl implements FriendShipService {
 
         return ResponseVO.successResponse(resp);
     }
+
+    @Override
+    public ResponseVO<AddFriendShipBlackResp> blackFriendShip(AddFriendShipBlackReq req) {
+        GetUserSequenceReq getUserSequenceReq = new GetUserSequenceReq();
+        getUserSequenceReq.setAppId(req.getAppId());
+        getUserSequenceReq.setUserId(req.getFromId());
+        ResponseVO<GetUserSequenceResp> fromInfo = userService.getUserSequence(getUserSequenceReq);
+        if (!fromInfo.isOk()) {
+            return ResponseVO.errorResponse(fromInfo.getCode(), fromInfo.getMsg());
+        }
+        getUserSequenceReq.setUserId(req.getToId());
+        ResponseVO<GetUserSequenceResp> toInfo = userService.getUserSequence(getUserSequenceReq);
+        if (!toInfo.isOk()) {
+            return ResponseVO.errorResponse(toInfo.getCode(), toInfo.getMsg());
+        }
+        LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                .like(FriendShipEntity::getFromId, req.getFromId())
+                .like(FriendShipEntity::getToId, req.getToId());
+        FriendShipEntity fromItem = friendShipMapper.selectOne(lambdaQueryWrapper);
+        if (fromItem == null) {
+            fromItem = new FriendShipEntity();
+            fromItem.setFromId(req.getFromId());
+            fromItem.setToId(req.getToId());
+            fromItem.setAppId(req.getAppId());
+            fromItem.setBlack(FriendShipStatus.BLACK_STATUS_BLACKED.getCode());
+            fromItem.setCreateTime(System.currentTimeMillis());
+            int insert = friendShipMapper.insert(fromItem);
+            if (insert != 1) {
+                return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
+            }
+        } else {
+            if (fromItem.getBlack() != null && fromItem.getBlack() == FriendShipStatus.BLACK_STATUS_BLACKED.getCode()) {
+                return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_IS_BLACK);
+            } else {
+                fromItem.setBlack(FriendShipStatus.BLACK_STATUS_BLACKED.getCode());
+                int update = friendShipMapper.update(fromItem, lambdaQueryWrapper);
+                if (update != 1) {
+                    return ResponseVO.errorResponse(FriendShipErrorCode.ADD_BLACK_ERROR);
+                }
+            }
+        }
+
+        AddFriendShipBlackResp addFriendShipBlackResp = new AddFriendShipBlackResp();
+        addFriendShipBlackResp.setBlackShipEntity(fromItem);
+        return ResponseVO.successResponse(addFriendShipBlackResp);
+    }
 }
