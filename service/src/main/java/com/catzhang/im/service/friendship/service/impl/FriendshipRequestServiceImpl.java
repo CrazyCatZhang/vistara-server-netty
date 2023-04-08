@@ -3,13 +3,20 @@ package com.catzhang.im.service.friendship.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.enums.ApproveFriendRequestStatus;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
+import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipRequestMapper;
 import com.catzhang.im.service.friendship.model.req.AddFriendShipRequestReq;
+import com.catzhang.im.service.friendship.model.req.ApproveFriendRequestReq;
 import com.catzhang.im.service.friendship.model.req.FriendDto;
+import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipReq;
 import com.catzhang.im.service.friendship.model.resp.AddFriendShipRequestResp;
+import com.catzhang.im.service.friendship.model.resp.ApproveFriendRequestResp;
+import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipResp;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
+import com.catzhang.im.service.friendship.service.FriendShipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +28,9 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
 
     @Autowired
     FriendShipRequestMapper friendShipRequestMapper;
+
+    @Autowired
+    FriendShipService friendShipService;
 
     @Override
     public ResponseVO<AddFriendShipRequestResp> addFriendShipRequest(AddFriendShipRequestReq req) {
@@ -64,5 +74,38 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
             }
         }
         return ResponseVO.successResponse(new AddFriendShipRequestResp(friendShipRequest));
+    }
+
+    @Override
+    public ResponseVO<ApproveFriendRequestResp> approveFriendRequest(ApproveFriendRequestReq req) {
+        FriendShipRequestEntity friendShipRequestEntity = friendShipRequestMapper.selectById(req.getId());
+        if (friendShipRequestEntity == null) {
+            throw new ApplicationException(FriendShipErrorCode.FRIEND_REQUEST_IS_NOT_EXIST);
+        }
+        if (!req.getOperator().equals(friendShipRequestEntity.getToId())) {
+            throw new ApplicationException(FriendShipErrorCode.NOT_APPROVER_OTHER_MAN_REQUEST);
+        }
+        friendShipRequestEntity.setApproveStatus(req.getStatus());
+        friendShipRequestEntity.setUpdateTime(System.currentTimeMillis());
+        int update = friendShipRequestMapper.updateById(friendShipRequestEntity);
+        if (update != 1) {
+            return ResponseVO.errorResponse();
+        }
+        if (req.getStatus() == ApproveFriendRequestStatus.AGREE.getCode()) {
+            FriendDto friendDto = new FriendDto();
+            friendDto.setRemark(friendShipRequestEntity.getRemark());
+            friendDto.setAddWording(friendShipRequestEntity.getAddWording());
+            friendDto.setAddSource(friendShipRequestEntity.getAddSource());
+            friendDto.setToId(friendShipRequestEntity.getToId());
+            HandleAddFriendShipReq handleAddFriendShipReq = new HandleAddFriendShipReq();
+            handleAddFriendShipReq.setAppId(req.getAppId());
+            handleAddFriendShipReq.setFromId(friendShipRequestEntity.getFromId());
+            handleAddFriendShipReq.setToItem(friendDto);
+            ResponseVO<HandleAddFriendShipResp> handleAddFriendShipRespResponseVO = friendShipService.handleAddFriendShip(handleAddFriendShipReq);
+            if (!handleAddFriendShipRespResponseVO.isOk() && handleAddFriendShipRespResponseVO.getCode() != FriendShipErrorCode.TO_IS_YOUR_FRIEND.getCode()) {
+                return ResponseVO.errorResponse(handleAddFriendShipRespResponseVO.getCode(), handleAddFriendShipRespResponseVO.getMsg());
+            }
+        }
+        return ResponseVO.successResponse(new ApproveFriendRequestResp(friendShipRequestEntity));
     }
 }
