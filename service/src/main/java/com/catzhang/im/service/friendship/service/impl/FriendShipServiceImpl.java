@@ -9,6 +9,7 @@ import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
+import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
@@ -37,6 +38,9 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    FriendShipRequestService friendShipRequestService;
 
     @Override
     public ResponseVO<ImportFriendShipResp> importFriendShip(ImportFriendShipReq req) {
@@ -97,9 +101,26 @@ public class FriendShipServiceImpl implements FriendShipService {
             addFriendShipResp.setFriendShipEntity(handleAddFriendShipRespResponseVO.getData().getFriendShipEntities());
             return ResponseVO.successResponse(addFriendShipResp);
         } else {
-
+            //TODO 插入一条好友申请消息
+            LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.like(FriendShipEntity::getAppId, req.getAppId())
+                    .like(FriendShipEntity::getFromId, req.getFromId())
+                    .like(FriendShipEntity::getToId, req.getToItem().getToId());
+            FriendShipEntity fromItem = friendShipMapper.selectOne(lambdaQueryWrapper);
+            if (fromItem == null || fromItem.getStatus() != FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
+                AddFriendShipRequestReq addFriendShipRequestReq = new AddFriendShipRequestReq();
+                addFriendShipRequestReq.setAppId(req.getAppId());
+                addFriendShipRequestReq.setFromId(req.getFromId());
+                addFriendShipRequestReq.setToItem(req.getToItem());
+                ResponseVO<AddFriendShipRequestResp> addFriendShipRequestRespResponseVO = friendShipRequestService.addFriendShipRequest(addFriendShipRequestReq);
+                if (!addFriendShipRequestRespResponseVO.isOk()) {
+                    return ResponseVO.errorResponse(addFriendShipRequestRespResponseVO.getCode(), addFriendShipRequestRespResponseVO.getMsg());
+                }
+                return ResponseVO.successResponse(addFriendShipRequestRespResponseVO.getData());
+            } else {
+                return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
+            }
         }
-        return ResponseVO.successResponse(addFriendShipResp);
     }
 
     @Override
