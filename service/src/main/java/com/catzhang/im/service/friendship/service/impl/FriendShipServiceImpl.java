@@ -117,6 +117,7 @@ public class FriendShipServiceImpl implements FriendShipService {
             fromItem.setFromId(req.getFromId());
             BeanUtils.copyProperties(req.getToItem(), fromItem);
             fromItem.setStatus(FriendShipStatus.FRIEND_STATUS_NORMAL.getCode());
+            fromItem.setBlack(FriendShipStatus.BLACK_STATUS_NORMAL.getCode());
             fromItem.setCreateTime(System.currentTimeMillis());
             int insert = friendShipMapper.insert(fromItem);
             if (insert != 1) {
@@ -153,9 +154,9 @@ public class FriendShipServiceImpl implements FriendShipService {
             toItem = new FriendShipEntity();
             toItem.setAppId(req.getAppId());
             toItem.setFromId(req.getToItem().getToId());
-//            BeanUtils.copyProperties(req.getToItem(), toItem);
             toItem.setToId(req.getFromId());
             toItem.setStatus(FriendShipStatus.FRIEND_STATUS_NORMAL.getCode());
+            toItem.setBlack(FriendShipStatus.BLACK_STATUS_NORMAL.getCode());
             toItem.setCreateTime(System.currentTimeMillis());
             int inset = friendShipMapper.insert(toItem);
             if (inset != 1) {
@@ -307,7 +308,11 @@ public class FriendShipServiceImpl implements FriendShipService {
         if (req.getCheckType() == VerifyFriendshipType.SINGLE.getType()) {
             resp = friendShipMapper.verifyFriendShip(req);
             resp.forEach(item -> {
-                item.setMessage(item.getStatus() == VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getStatus() ? VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getMessage() : VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_NO_RELATIONSHIP.getMessage());
+                item.setMessage(
+                        item.getStatus() == VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getStatus() ?
+                                VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_FRIEND.getMessage() :
+                                VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_RESULT_IS_NO_RELATIONSHIP.getMessage()
+                );
             });
         } else {
             resp = friendShipMapper.verifyBidirectionalFriendShip(req);
@@ -402,5 +407,48 @@ public class FriendShipServiceImpl implements FriendShipService {
             return ResponseVO.errorResponse();
         }
         return ResponseVO.successResponse(new DeleteFriendShipBlackResp(fromItem));
+    }
+
+    @Override
+    public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(VerifyFriendShipReq req) {
+        Map<String, Integer> result = req.getToIds().stream().collect(Collectors.toMap(Function.identity(), s -> 0));
+
+        List<VerifyFriendShipResp> resp;
+        if (req.getCheckType() == VerifyFriendshipType.SINGLE.getType()) {
+            resp = friendShipMapper.verifyFriendShipBlack(req);
+            resp.forEach(item -> {
+                item.setMessage(
+                        item.getStatus() == VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_NORMAL.getStatus() ?
+                                VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_NORMAL.getMessage() :
+                                VerifyFriendship.UNIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_BLACKED.getMessage()
+                );
+            });
+        } else {
+            resp = friendShipMapper.verifyBidirectionalFriendShipBlack(req);
+            resp.forEach(item -> {
+                if (item.getStatus() == 1) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_NORMAL.getMessage());
+                } else if (item.getStatus() == 2) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_B_BLACKED_A.getMessage());
+                } else if (item.getStatus() == 3) {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_A_BLACKED_B.getMessage());
+                } else {
+                    item.setMessage(VerifyFriendship.BIDIRECTIONAL_VERIFICATION_BLACK_RESULT_IS_BLACKED.getMessage());
+                }
+            });
+        }
+
+        Map<String, Integer> collect = resp.stream().collect(Collectors.toMap(VerifyFriendShipResp::getToId, VerifyFriendShipResp::getStatus));
+        result.keySet().forEach(toId -> {
+            if (!collect.containsKey(toId)) {
+                VerifyFriendShipResp verifyFriendShipResp = new VerifyFriendShipResp();
+                verifyFriendShipResp.setFromId(req.getFromId());
+                verifyFriendShipResp.setToId(toId);
+                verifyFriendShipResp.setStatus(-1);
+                verifyFriendShipResp.setMessage(FriendShipErrorCode.TO_IS_NOT_YOUR_FRIEND.getError());
+                resp.add(verifyFriendShipResp);
+            }
+        });
+        return ResponseVO.successResponse(resp);
     }
 }

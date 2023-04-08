@@ -69,4 +69,9 @@ public class FriendShipController {
     public ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(@RequestBody @Validated DeleteFriendShipBlackReq req) {
         return friendShipService.deleteFriendShipBlack(req);
     }
+
+    @GetMapping("verifyBlack")
+    public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(@RequestBody @Validated VerifyFriendShipReq req) {
+        return friendShipService.verifyFriendShipBlack(req);
+    }
 }
