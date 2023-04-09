@@ -41,7 +41,12 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     FRIEND_SHIP_REQUEST_IS_FAILED(30018, "好友申请失败"),
 
-    FRIENDS_ARE_ALREADY_IN_THIS_GROUP(30019,"好友已经在此分组里")
+    FRIENDS_ARE_ALREADY_IN_THIS_GROUP(30019, "好友已经在此分组里"),
+
+    FAILED_TO_CLEAR_GROUP_FRIENDS(30020, "分组内好友删除失败"),
+
+    GROUP_DELETION_FAILED(30021, "分组删除失败"),
+
     ;
 
     private final int code;

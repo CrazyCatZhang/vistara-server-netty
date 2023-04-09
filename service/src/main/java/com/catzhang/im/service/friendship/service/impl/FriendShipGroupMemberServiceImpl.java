@@ -1,12 +1,16 @@
 package com.catzhang.im.service.friendship.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipGroupMemberMapper;
 import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupMemberReq;
+import com.catzhang.im.service.friendship.model.req.ClearFriendShipGroupMemberReq;
 import com.catzhang.im.service.friendship.model.req.GetFriendShipGroupReq;
 import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipGroupMemberReq;
 import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupMemberResp;
+import com.catzhang.im.service.friendship.model.resp.ClearFriendShipGroupMemberResp;
 import com.catzhang.im.service.friendship.model.resp.GetFriendShipGroupResp;
 import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipGroupMemberResp;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
@@ -89,5 +93,17 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
             e.printStackTrace();
             return ResponseVO.errorResponse();
         }
+    }
+
+    @Override
+    public ResponseVO<ClearFriendShipGroupMemberResp> clearFriendShipGroupMember(ClearFriendShipGroupMemberReq req) {
+        LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
+        List<FriendShipGroupMemberEntity> friendShipGroupMemberEntities = friendShipGroupMemberMapper.selectList(lambdaQueryWrapper);
+        int delete = friendShipGroupMemberMapper.delete(lambdaQueryWrapper);
+        if (delete == 0) {
+            return ResponseVO.successResponse(FriendShipErrorCode.FAILED_TO_CLEAR_GROUP_FRIENDS);
+        }
+        return ResponseVO.successResponse(new ClearFriendShipGroupMemberResp(friendShipGroupMemberEntities));
     }
 }

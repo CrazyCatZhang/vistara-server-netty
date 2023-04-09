@@ -6,18 +6,20 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.DelFlagEnum;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupEntity;
+import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipGroupMapper;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupMemberReq;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupReq;
-import com.catzhang.im.service.friendship.model.req.GetFriendShipGroupReq;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupMemberResp;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupResp;
-import com.catzhang.im.service.friendship.model.resp.GetFriendShipGroupResp;
+import com.catzhang.im.service.friendship.model.req.*;
+import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author crazycatzhang
@@ -89,5 +91,41 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         }
 
         return ResponseVO.successResponse(new GetFriendShipGroupResp(friendShipGroupEntity));
+    }
+
+    @Override
+    public ResponseVO<DeleteFriendShipGroupResp> deleteFriendShipGroup(DeleteFriendShipGroupReq req) {
+        Map<String, List<String>> successGroups = new HashMap<>();
+        Map<String, String> failureGroups = new HashMap<>();
+
+        List<String> toIds = new ArrayList<>();
+        for (String groupName : req.getGroupNames()) {
+            toIds.clear();
+            LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
+                    .like(FriendShipGroupEntity::getGroupName, groupName)
+                    .like(FriendShipGroupEntity::getFromId, req.getFromId());
+            FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
+            if (friendShipGroupEntity != null) {
+                int delete = friendShipGroupMapper.delete(lambdaQueryWrapper);
+                if (delete != 1) {
+                    failureGroups.put(groupName, FriendShipErrorCode.GROUP_DELETION_FAILED.getError());
+                }
+                ClearFriendShipGroupMemberReq clearFriendShipGroupMemberReq = new ClearFriendShipGroupMemberReq();
+                clearFriendShipGroupMemberReq.setGroupId(friendShipGroupEntity.getGroupId());
+                ResponseVO<ClearFriendShipGroupMemberResp> clearFriendShipGroupMemberRespResponseVO = friendShipGroupMemberService.clearFriendShipGroupMember(clearFriendShipGroupMemberReq);
+                if (!clearFriendShipGroupMemberRespResponseVO.isOk()) {
+                    failureGroups.put(groupName, clearFriendShipGroupMemberRespResponseVO.getMsg());
+                }
+                List<FriendShipGroupMemberEntity> friendShipGroupMemberEntityList = clearFriendShipGroupMemberRespResponseVO.getData().getFriendShipGroupMemberEntityList();
+                friendShipGroupMemberEntityList.forEach(item -> {
+                    toIds.add(item.getToId());
+                });
+                successGroups.put(groupName, toIds);
+            } else {
+                failureGroups.put(groupName, FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_NOT_EXIST.getError());
+            }
+        }
+        return ResponseVO.successResponse(new DeleteFriendShipGroupResp(successGroups, failureGroups));
     }
 }
