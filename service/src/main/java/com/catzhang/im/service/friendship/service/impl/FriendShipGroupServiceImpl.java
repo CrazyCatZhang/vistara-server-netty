@@ -12,6 +12,7 @@ import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,6 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
 
     @Override
     public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(AddFriendShipGroupReq req) {
-        System.out.println(req);
         LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
                 .like(FriendShipGroupEntity::getGroupName, req.getGroupName())
@@ -46,34 +46,49 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_EXIST);
         }
 
-        FriendShipGroupEntity friendShipGroup = new FriendShipGroupEntity();
-        friendShipGroup.setAppId(req.getAppId());
-        friendShipGroup.setGroupName(req.getGroupName());
-        friendShipGroup.setFromId(req.getFromId());
-        friendShipGroup.setDelFlag(DelFlagEnum.NORMAL.getCode());
-        friendShipGroup.setCreateTime(System.currentTimeMillis());
-        System.out.println(friendShipGroup);
-        try {
-            int insert = friendShipGroupMapper.insert(friendShipGroup);
-            if (insert != 1) {
-                return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_CREATE_ERROR);
-            }
-            if (CollectionUtil.isNotEmpty(req.getToIds())) {
-                System.out.println("11111111111111111111");
-                AddFriendShipGroupMemberReq addFriendShipGroupMemberReq = new AddFriendShipGroupMemberReq();
-                addFriendShipGroupMemberReq.setAppId(req.getAppId());
-                addFriendShipGroupMemberReq.setGroupName(req.getGroupName());
-                addFriendShipGroupMemberReq.setFromId(req.getFromId());
-                addFriendShipGroupMemberReq.setToIds(req.getToIds());
-                ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMemberRespResponseVO = friendShipGroupMemberService.addFriendShipGroupMember(addFriendShipGroupMemberReq);
-                if (!addFriendShipGroupMemberRespResponseVO.isOk()) {
-                    return ResponseVO.errorResponse(addFriendShipGroupMemberRespResponseVO.getCode(), addFriendShipGroupMemberRespResponseVO.getMsg());
+        IsDeletedFriendShipGroupReq isDeletedFriendShipGroupReq = new IsDeletedFriendShipGroupReq();
+        isDeletedFriendShipGroupReq.setGroupName(req.getGroupName());
+        isDeletedFriendShipGroupReq.setAppId(req.getAppId());
+        isDeletedFriendShipGroupReq.setFromId(req.getFromId());
+        FriendShipGroupEntity deletedGroup = friendShipGroupMapper.isDeletedGroup(isDeletedFriendShipGroupReq);
+        FriendShipGroupEntity friendShipGroup;
+        if (deletedGroup == null) {
+            friendShipGroup = new FriendShipGroupEntity();
+            friendShipGroup.setAppId(req.getAppId());
+            friendShipGroup.setGroupName(req.getGroupName());
+            friendShipGroup.setFromId(req.getFromId());
+            friendShipGroup.setDelFlag(DelFlagEnum.NORMAL.getCode());
+            friendShipGroup.setCreateTime(System.currentTimeMillis());
+            try {
+                int insert = friendShipGroupMapper.insert(friendShipGroup);
+                if (insert != 1) {
+                    return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_CREATE_ERROR);
                 }
-                return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
+            } catch (DuplicateKeyException e) {
+                e.getStackTrace();
+                return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_EXIST);
             }
-        } catch (DuplicateKeyException e) {
-            e.getStackTrace();
-            return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_EXIST);
+        } else {
+            RecoveryFriendShipGroupReq recoveryFriendShipGroupReq = new RecoveryFriendShipGroupReq();
+            BeanUtils.copyProperties(isDeletedFriendShipGroupReq, recoveryFriendShipGroupReq);
+            recoveryFriendShipGroupReq.setUpdateTime(System.currentTimeMillis());
+            friendShipGroupMapper.recovery(recoveryFriendShipGroupReq);
+            deletedGroup.setDelFlag(DelFlagEnum.NORMAL.getCode());
+            deletedGroup.setUpdateTime(recoveryFriendShipGroupReq.getUpdateTime());
+            friendShipGroup = deletedGroup;
+        }
+
+        if (CollectionUtil.isNotEmpty(req.getToIds())) {
+            AddFriendShipGroupMemberReq addFriendShipGroupMemberReq = new AddFriendShipGroupMemberReq();
+            addFriendShipGroupMemberReq.setAppId(req.getAppId());
+            addFriendShipGroupMemberReq.setGroupName(req.getGroupName());
+            addFriendShipGroupMemberReq.setFromId(req.getFromId());
+            addFriendShipGroupMemberReq.setToIds(req.getToIds());
+            ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMemberRespResponseVO = friendShipGroupMemberService.addFriendShipGroupMember(addFriendShipGroupMemberReq);
+            if (!addFriendShipGroupMemberRespResponseVO.isOk()) {
+                return ResponseVO.errorResponse(addFriendShipGroupMemberRespResponseVO.getCode(), addFriendShipGroupMemberRespResponseVO.getMsg());
+            }
+            return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
         }
 
         return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
@@ -107,15 +122,19 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
                     .like(FriendShipGroupEntity::getFromId, req.getFromId());
             FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
             if (friendShipGroupEntity != null) {
+                friendShipGroupEntity.setUpdateTime(System.currentTimeMillis());
+                friendShipGroupMapper.update(friendShipGroupEntity, lambdaQueryWrapper);
                 int delete = friendShipGroupMapper.delete(lambdaQueryWrapper);
                 if (delete != 1) {
                     failureGroups.put(groupName, FriendShipErrorCode.GROUP_DELETION_FAILED.getError());
+                    continue;
                 }
                 ClearFriendShipGroupMemberReq clearFriendShipGroupMemberReq = new ClearFriendShipGroupMemberReq();
                 clearFriendShipGroupMemberReq.setGroupId(friendShipGroupEntity.getGroupId());
                 ResponseVO<ClearFriendShipGroupMemberResp> clearFriendShipGroupMemberRespResponseVO = friendShipGroupMemberService.clearFriendShipGroupMember(clearFriendShipGroupMemberReq);
                 if (!clearFriendShipGroupMemberRespResponseVO.isOk()) {
                     failureGroups.put(groupName, clearFriendShipGroupMemberRespResponseVO.getMsg());
+                    continue;
                 }
                 List<FriendShipGroupMemberEntity> friendShipGroupMemberEntityList = clearFriendShipGroupMemberRespResponseVO.getData().getFriendShipGroupMemberEntityList();
                 friendShipGroupMemberEntityList.forEach(item -> {

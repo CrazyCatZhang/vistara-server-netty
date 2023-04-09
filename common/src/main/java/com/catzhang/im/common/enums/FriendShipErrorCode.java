@@ -47,7 +47,7 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     GROUP_DELETION_FAILED(30021, "分组删除失败"),
 
-    ;
+    NO_FRIENDS_IN_THE_GROUP(30022, "分组内没有好友");
 
     private final int code;
     private final String error;

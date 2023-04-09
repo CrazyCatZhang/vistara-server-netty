@@ -94,6 +94,9 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
         LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
         List<FriendShipGroupMemberEntity> friendShipGroupMemberEntities = friendShipGroupMemberMapper.selectList(lambdaQueryWrapper);
+        if (friendShipGroupMemberEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.NO_FRIENDS_IN_THE_GROUP);
+        }
         int delete = friendShipGroupMemberMapper.delete(lambdaQueryWrapper);
         if (delete == 0) {
             return ResponseVO.successResponse(FriendShipErrorCode.FAILED_TO_CLEAR_GROUP_FRIENDS);
