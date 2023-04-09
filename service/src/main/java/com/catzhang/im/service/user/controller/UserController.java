@@ -33,9 +33,9 @@ public class UserController {
         return userService.getUserInfo(req);
     }
 
-    @GetMapping("getUserSequence")
-    public ResponseVO<GetUserSequenceResp> getUserSequence(@RequestBody GetUserSequenceReq req) {
-        return userService.getUserSequence(req);
+    @GetMapping("getSingleUserInfo")
+    public ResponseVO<GetSingleUserInfoResp> getUserSequence(@RequestBody GetSingleUserInfoReq req) {
+        return userService.getSingleUserInfo(req);
     }
 
     @PutMapping("modifyUserInfo")

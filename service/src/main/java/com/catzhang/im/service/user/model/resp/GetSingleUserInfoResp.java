@@ -7,6 +7,6 @@ import lombok.Data;
  * @author crazycatzhang
  */
 @Data
-public class GetUserSequenceResp {
+public class GetSingleUserInfoResp {
     private UserDataEntity userDataEntity;
 }

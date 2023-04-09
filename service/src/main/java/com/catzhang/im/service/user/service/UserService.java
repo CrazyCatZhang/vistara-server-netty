@@ -14,7 +14,7 @@ public interface UserService {
 
     ResponseVO<GetUserInfoResp> getUserInfo(GetUserInfoReq req);
 
-    ResponseVO<GetUserSequenceResp> getUserSequence(GetUserSequenceReq req);
+    ResponseVO<GetSingleUserInfoResp> getSingleUserInfo(GetSingleUserInfoReq req);
 
     ResponseVO<ModifyUserInfoResp> modifyUserInfo(ModifyUserInfoReq req);
 }

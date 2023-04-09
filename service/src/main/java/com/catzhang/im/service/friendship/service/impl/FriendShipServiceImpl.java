@@ -12,8 +12,8 @@ import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
-import com.catzhang.im.service.user.model.req.GetUserSequenceReq;
-import com.catzhang.im.service.user.model.resp.GetUserSequenceResp;
+import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
+import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -76,16 +76,16 @@ public class FriendShipServiceImpl implements FriendShipService {
     @Override
     public ResponseVO<AddFriendShipResp> addFriendShip(AddFriendShipReq req) {
         AddFriendShipResp addFriendShipResp = new AddFriendShipResp();
-        GetUserSequenceReq getUserSequenceReq = new GetUserSequenceReq();
-        getUserSequenceReq.setUserId(req.getFromId());
-        getUserSequenceReq.setAppId(req.getAppId());
-        ResponseVO<GetUserSequenceResp> fromUserInfo = userService.getUserSequence(getUserSequenceReq);
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setUserId(req.getFromId());
+        getSingleUserInfoReq.setAppId(req.getAppId());
+        ResponseVO<GetSingleUserInfoResp> fromUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!fromUserInfo.isOk()) {
             return ResponseVO.errorResponse(fromUserInfo.getCode(), fromUserInfo.getMsg());
         }
 
-        getUserSequenceReq.setUserId(req.getToItem().getToId());
-        ResponseVO<GetUserSequenceResp> toUserInfo = userService.getUserSequence(getUserSequenceReq);
+        getSingleUserInfoReq.setUserId(req.getToItem().getToId());
+        ResponseVO<GetSingleUserInfoResp> toUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!toUserInfo.isOk()) {
             return ResponseVO.errorResponse(toUserInfo.getCode(), toUserInfo.getMsg());
         }
@@ -201,15 +201,15 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Override
     public ResponseVO<UpdateFriendShipResp> updateFriendShip(UpdateFriendShipReq req) {
-        GetUserSequenceReq getUserSequenceReq = new GetUserSequenceReq();
-        getUserSequenceReq.setAppId(req.getAppId());
-        getUserSequenceReq.setUserId(req.getFromId());
-        ResponseVO<GetUserSequenceResp> fromItem = userService.getUserSequence(getUserSequenceReq);
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setAppId(req.getAppId());
+        getSingleUserInfoReq.setUserId(req.getFromId());
+        ResponseVO<GetSingleUserInfoResp> fromItem = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!fromItem.isOk()) {
             return ResponseVO.errorResponse(fromItem.getCode(), fromItem.getMsg());
         }
-        getUserSequenceReq.setUserId(req.getToItem().getToId());
-        ResponseVO<GetUserSequenceResp> toItem = userService.getUserSequence(getUserSequenceReq);
+        getSingleUserInfoReq.setUserId(req.getToItem().getToId());
+        ResponseVO<GetSingleUserInfoResp> toItem = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!toItem.isOk()) {
             return ResponseVO.errorResponse(toItem.getCode(), toItem.getMsg());
         }
@@ -367,15 +367,15 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Override
     public ResponseVO<AddFriendShipBlackResp> blackFriendShip(AddFriendShipBlackReq req) {
-        GetUserSequenceReq getUserSequenceReq = new GetUserSequenceReq();
-        getUserSequenceReq.setAppId(req.getAppId());
-        getUserSequenceReq.setUserId(req.getFromId());
-        ResponseVO<GetUserSequenceResp> fromInfo = userService.getUserSequence(getUserSequenceReq);
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setAppId(req.getAppId());
+        getSingleUserInfoReq.setUserId(req.getFromId());
+        ResponseVO<GetSingleUserInfoResp> fromInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!fromInfo.isOk()) {
             return ResponseVO.errorResponse(fromInfo.getCode(), fromInfo.getMsg());
         }
-        getUserSequenceReq.setUserId(req.getToId());
-        ResponseVO<GetUserSequenceResp> toInfo = userService.getUserSequence(getUserSequenceReq);
+        getSingleUserInfoReq.setUserId(req.getToId());
+        ResponseVO<GetSingleUserInfoResp> toInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
         if (!toInfo.isOk()) {
             return ResponseVO.errorResponse(toInfo.getCode(), toInfo.getMsg());
         }

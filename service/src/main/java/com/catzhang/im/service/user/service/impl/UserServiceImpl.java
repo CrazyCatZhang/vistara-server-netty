@@ -115,7 +115,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseVO<GetUserSequenceResp> getUserSequence(GetUserSequenceReq req) {
+    public ResponseVO<GetSingleUserInfoResp> getSingleUserInfo(GetSingleUserInfoReq req) {
         LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(UserDataEntity::getUserId, req.getUserId())
                 .like(UserDataEntity::getAppId, req.getAppId());
@@ -126,10 +126,10 @@ public class UserServiceImpl implements UserService {
             return ResponseVO.errorResponse(UserErrorCode.USER_IS_NOT_EXIST);
         }
 
-        GetUserSequenceResp getUserSequenceResp = new GetUserSequenceResp();
-        getUserSequenceResp.setUserDataEntity(userDataEntity);
+        GetSingleUserInfoResp getSingleUserInfoResp = new GetSingleUserInfoResp();
+        getSingleUserInfoResp.setUserDataEntity(userDataEntity);
 
-        return ResponseVO.successResponse(getUserSequenceResp);
+        return ResponseVO.successResponse(getSingleUserInfoResp);
     }
 
     @Override

@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class GetUserSequenceReq extends RequestBase {
+public class GetSingleUserInfoReq extends RequestBase {
     private String userId;
 }
