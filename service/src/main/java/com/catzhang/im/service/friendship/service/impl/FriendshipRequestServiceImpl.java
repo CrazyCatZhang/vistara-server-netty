@@ -1,6 +1,7 @@
 package com.catzhang.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.ApproveFriendRequestStatus;
@@ -8,17 +9,17 @@ import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipRequestMapper;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipRequestReq;
-import com.catzhang.im.service.friendship.model.req.ApproveFriendRequestReq;
-import com.catzhang.im.service.friendship.model.req.FriendDto;
-import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipReq;
+import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.AddFriendShipRequestResp;
 import com.catzhang.im.service.friendship.model.resp.ApproveFriendRequestResp;
 import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipResp;
+import com.catzhang.im.service.friendship.model.resp.ReadFriendShipRequestResp;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author crazycatzhang
@@ -107,5 +108,20 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
             }
         }
         return ResponseVO.successResponse(new ApproveFriendRequestResp(friendShipRequestEntity));
+    }
+
+    @Override
+    public ResponseVO<ReadFriendShipRequestResp> readFriendShipRequest(ReadFriendShipRequestReq req) {
+        LambdaUpdateWrapper<FriendShipRequestEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
+                .like(FriendShipRequestEntity::getToId, req.getUserId())
+                .set(FriendShipRequestEntity::getReadStatus, 1);
+        friendShipRequestMapper.update(null, lambdaUpdateWrapper);
+        LambdaQueryWrapper<FriendShipRequestEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
+                .like(FriendShipRequestEntity::getToId, req.getUserId());
+        List<FriendShipRequestEntity> friendShipRequestEntities = friendShipRequestMapper.selectList(lambdaQueryWrapper);
+        friendShipRequestEntities.forEach(System.out::println);
+        return ResponseVO.successResponse(new ReadFriendShipRequestResp(friendShipRequestEntities));
     }
 }
