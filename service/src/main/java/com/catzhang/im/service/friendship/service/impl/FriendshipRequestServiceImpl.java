@@ -10,12 +10,10 @@ import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipRequestMapper;
 import com.catzhang.im.service.friendship.model.req.*;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipRequestResp;
-import com.catzhang.im.service.friendship.model.resp.ApproveFriendRequestResp;
-import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipResp;
-import com.catzhang.im.service.friendship.model.resp.ReadFriendShipRequestResp;
+import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -117,11 +115,18 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
                 .like(FriendShipRequestEntity::getToId, req.getUserId())
                 .set(FriendShipRequestEntity::getReadStatus, 1);
         friendShipRequestMapper.update(null, lambdaUpdateWrapper);
+        GetFriendShipRequestReq getFriendShipRequestReq = new GetFriendShipRequestReq();
+        BeanUtils.copyProperties(req, getFriendShipRequestReq);
+        ResponseVO<GetFriendShipRequestResp> friendShipRequest = this.getFriendShipRequest(getFriendShipRequestReq);
+        return ResponseVO.successResponse(new ReadFriendShipRequestResp(friendShipRequest.getData().getFriendShipRequestEntityList()));
+    }
+
+    @Override
+    public ResponseVO<GetFriendShipRequestResp> getFriendShipRequest(GetFriendShipRequestReq req) {
         LambdaQueryWrapper<FriendShipRequestEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
                 .like(FriendShipRequestEntity::getToId, req.getUserId());
         List<FriendShipRequestEntity> friendShipRequestEntities = friendShipRequestMapper.selectList(lambdaQueryWrapper);
-        friendShipRequestEntities.forEach(System.out::println);
-        return ResponseVO.successResponse(new ReadFriendShipRequestResp(friendShipRequestEntities));
+        return ResponseVO.successResponse(new GetFriendShipRequestResp(friendShipRequestEntities));
     }
 }

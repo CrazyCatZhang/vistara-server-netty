@@ -2,8 +2,10 @@ package com.catzhang.im.service.friendship.controller;
 
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.friendship.model.req.ApproveFriendRequestReq;
+import com.catzhang.im.service.friendship.model.req.GetFriendShipRequestReq;
 import com.catzhang.im.service.friendship.model.req.ReadFriendShipRequestReq;
 import com.catzhang.im.service.friendship.model.resp.ApproveFriendRequestResp;
+import com.catzhang.im.service.friendship.model.resp.GetFriendShipRequestResp;
 import com.catzhang.im.service.friendship.model.resp.ReadFriendShipRequestResp;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,5 +30,10 @@ public class FriendShipRequestController {
     @PutMapping("read")
     public ResponseVO<ReadFriendShipRequestResp> readFriendShipRequest(@RequestBody @Validated ReadFriendShipRequestReq req) {
         return friendShipRequestService.readFriendShipRequest(req);
+    }
+
+    @GetMapping("get")
+    public ResponseVO<GetFriendShipRequestResp> getFriendShipRequest(@RequestBody @Validated GetFriendShipRequestReq req) {
+        return friendShipRequestService.getFriendShipRequest(req);
     }
 }
