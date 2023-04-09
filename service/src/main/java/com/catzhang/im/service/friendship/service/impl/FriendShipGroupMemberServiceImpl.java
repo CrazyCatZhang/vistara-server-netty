@@ -49,23 +49,32 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
         }
 
         List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
 
         GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
         getSingleUserInfoReq.setAppId(req.getAppId());
         HandleAddFriendShipGroupMemberReq handleAddFriendShipGroupMemberReq = new HandleAddFriendShipGroupMemberReq();
         handleAddFriendShipGroupMemberReq.setGroupId(friendShipGroup.getData().getFriendShipGroupEntity().getGroupId());
-        req.getToIds().forEach(toId -> {
+
+        for (String toId :
+                req.getToIds()) {
             getSingleUserInfoReq.setUserId(toId);
             handleAddFriendShipGroupMemberReq.setToId(toId);
             ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
             if (singleUserInfo.isOk()) {
                 ResponseVO<HandleAddFriendShipGroupMemberResp> handleAddFriendShipGroupMemberRespResponseVO = this.handleAddFriendShipGroupMember(handleAddFriendShipGroupMemberReq);
+                if (!handleAddFriendShipGroupMemberRespResponseVO.isOk()) {
+                    failureIds.add(toId);
+                    continue;
+                }
                 if (handleAddFriendShipGroupMemberRespResponseVO.getData().getResult() == 1) {
                     successIds.add(toId);
                 }
+            } else {
+                return ResponseVO.errorResponse(singleUserInfo.getCode(), toId + singleUserInfo.getMsg());
             }
-        });
-        return ResponseVO.successResponse(new AddFriendShipGroupMemberResp(successIds));
+        }
+        return ResponseVO.successResponse(new AddFriendShipGroupMemberResp(successIds, failureIds));
     }
 
     @Override

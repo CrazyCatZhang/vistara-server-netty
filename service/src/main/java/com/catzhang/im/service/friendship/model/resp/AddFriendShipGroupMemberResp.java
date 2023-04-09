@@ -12,4 +12,5 @@ import java.util.List;
 @AllArgsConstructor
 public class AddFriendShipGroupMemberResp {
     private List<String> successIds;
+    private List<String> failureIds;
 }

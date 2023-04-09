@@ -39,7 +39,10 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     YOU_HAVE_NOT_FRIEND_SHIP(30017, "你还没有添加过好友"),
 
-    FRIEND_SHIP_REQUEST_IS_FAILED(30018, "好友申请失败");
+    FRIEND_SHIP_REQUEST_IS_FAILED(30018, "好友申请失败"),
+
+    FRIENDS_ARE_ALREADY_IN_THIS_GROUP(30019,"好友已经在此分组里")
+    ;
 
     private final int code;
     private final String error;
