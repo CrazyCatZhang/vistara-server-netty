@@ -3,9 +3,11 @@ package com.catzhang.im.service.friendship.controller;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupMemberReq;
 import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupReq;
+import com.catzhang.im.service.friendship.model.req.DeleteFriendShipGroupMemberReq;
 import com.catzhang.im.service.friendship.model.req.DeleteFriendShipGroupReq;
 import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupMemberResp;
 import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupResp;
+import com.catzhang.im.service.friendship.model.resp.DeleteFriendShipGroupMemberResp;
 import com.catzhang.im.service.friendship.model.resp.DeleteFriendShipGroupResp;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
@@ -39,5 +41,10 @@ public class FriendShipGroupController {
     @PostMapping("/member/add")
     public ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMember(@RequestBody @Validated AddFriendShipGroupMemberReq req) {
         return friendShipGroupMemberService.addFriendShipGroupMember(req);
+    }
+
+    @DeleteMapping("/member/delete")
+    public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(@RequestBody @Validated DeleteFriendShipGroupMemberReq req) {
+        return friendShipGroupMemberService.deleteFriendShipGroupMember(req);
     }
 }

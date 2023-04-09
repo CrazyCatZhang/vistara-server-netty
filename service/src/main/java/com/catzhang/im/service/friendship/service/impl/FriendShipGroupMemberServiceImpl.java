@@ -5,14 +5,8 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipGroupMemberMapper;
-import com.catzhang.im.service.friendship.model.req.AddFriendShipGroupMemberReq;
-import com.catzhang.im.service.friendship.model.req.ClearFriendShipGroupMemberReq;
-import com.catzhang.im.service.friendship.model.req.GetFriendShipGroupReq;
-import com.catzhang.im.service.friendship.model.req.HandleAddFriendShipGroupMemberReq;
-import com.catzhang.im.service.friendship.model.resp.AddFriendShipGroupMemberResp;
-import com.catzhang.im.service.friendship.model.resp.ClearFriendShipGroupMemberResp;
-import com.catzhang.im.service.friendship.model.resp.GetFriendShipGroupResp;
-import com.catzhang.im.service.friendship.model.resp.HandleAddFriendShipGroupMemberResp;
+import com.catzhang.im.service.friendship.model.req.*;
+import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
@@ -105,5 +99,58 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
             return ResponseVO.successResponse(FriendShipErrorCode.FAILED_TO_CLEAR_GROUP_FRIENDS);
         }
         return ResponseVO.successResponse(new ClearFriendShipGroupMemberResp(friendShipGroupMemberEntities));
+    }
+
+    @Override
+    public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(DeleteFriendShipGroupMemberReq req) {
+        GetFriendShipGroupReq getFriendShipGroupReq = new GetFriendShipGroupReq();
+        getFriendShipGroupReq.setGroupName(req.getGroupName());
+        getFriendShipGroupReq.setAppId(req.getAppId());
+        getFriendShipGroupReq.setFromId(req.getFromId());
+
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setAppId(req.getAppId());
+        HandleDeleteFriendShipGroupMemberReq handleDeleteFriendShipGroupMemberReq = new HandleDeleteFriendShipGroupMemberReq();
+
+        ResponseVO<GetFriendShipGroupResp> friendShipGroup = friendShipGroupService.getFriendShipGroup(getFriendShipGroupReq);
+        handleDeleteFriendShipGroupMemberReq.setGroupId(friendShipGroup.getData().getFriendShipGroupEntity().getGroupId());
+
+        if (!friendShipGroup.isOk()) {
+            return ResponseVO.errorResponse(friendShipGroup.getCode(), friendShipGroup.getMsg());
+        }
+
+        List<String> successIds = new ArrayList<>();
+        List<String> failureIds = new ArrayList<>();
+
+        req.getToIds().forEach(toId -> {
+            getSingleUserInfoReq.setUserId(toId);
+            handleDeleteFriendShipGroupMemberReq.setToId(toId);
+            ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
+            if (singleUserInfo.isOk()) {
+                ResponseVO<HandleDeleteFriendShipGroupMemberResp> handleDeleteFriendShipGroupMemberRespResponseVO = this.handleDeleteFriendShipGroupMember(handleDeleteFriendShipGroupMemberReq);
+                if (handleDeleteFriendShipGroupMemberRespResponseVO.getData().getResult() == 1) {
+                    successIds.add(toId);
+                } else {
+                    failureIds.add(toId);
+                }
+            }
+        });
+
+        return ResponseVO.successResponse(new DeleteFriendShipGroupMemberResp(successIds, failureIds));
+    }
+
+    @Override
+    public ResponseVO<HandleDeleteFriendShipGroupMemberResp> handleDeleteFriendShipGroupMember(HandleDeleteFriendShipGroupMemberReq req) {
+        LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId())
+                .like(FriendShipGroupMemberEntity::getToId, req.getToId());
+        int result;
+        try {
+            result = friendShipGroupMemberMapper.delete(lambdaQueryWrapper);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = 0;
+        }
+        return ResponseVO.successResponse(new HandleDeleteFriendShipGroupMemberResp(result));
     }
 }
