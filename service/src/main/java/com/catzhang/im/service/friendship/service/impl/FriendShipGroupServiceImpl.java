@@ -113,9 +113,9 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         Map<String, List<String>> successGroups = new HashMap<>();
         Map<String, String> failureGroups = new HashMap<>();
 
-        List<String> toIds = new ArrayList<>();
+
         for (String groupName : req.getGroupNames()) {
-            toIds.clear();
+            List<String> toIds = new ArrayList<>();
             LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
             lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
                     .like(FriendShipGroupEntity::getGroupName, groupName)
@@ -146,5 +146,34 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             }
         }
         return ResponseVO.successResponse(new DeleteFriendShipGroupResp(successGroups, failureGroups));
+    }
+
+    @Override
+    public ResponseVO<GetAllFriendShipGroupResp> getAllFriendShipGroup(GetAllFriendShipGroupReq req) {
+        Map<String, List<String>> groups = new HashMap<>();
+
+        LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
+                .like(FriendShipGroupEntity::getFromId, req.getFromId());
+        List<FriendShipGroupEntity> friendShipGroupEntities = friendShipGroupMapper.selectList(lambdaQueryWrapper);
+        if (friendShipGroupEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.YOU_HAVE_NOT_CREATED_GROUP);
+        }
+        GetAllFriendShipGroupMemberReq getAllFriendShipGroupMemberReq = new GetAllFriendShipGroupMemberReq();
+        getAllFriendShipGroupMemberReq.setAppId(req.getAppId());
+        for (FriendShipGroupEntity item : friendShipGroupEntities) {
+            List<String> toIds = new ArrayList<>();
+            getAllFriendShipGroupMemberReq.setGroupId(item.getGroupId());
+            ResponseVO<GetAllFriendShipGroupMemberResp> allFriendShipGroupMember = friendShipGroupMemberService.getAllFriendShipGroupMember(getAllFriendShipGroupMemberReq);
+            if (!allFriendShipGroupMember.isOk()) {
+                return ResponseVO.errorResponse(allFriendShipGroupMember.getCode(), allFriendShipGroupMember.getMsg());
+            }
+            List<FriendShipGroupMemberEntity> friendShipGroupMemberEntityList = allFriendShipGroupMember.getData().getFriendShipGroupMemberEntityList();
+            friendShipGroupMemberEntityList.forEach(groupMember -> {
+                toIds.add(groupMember.getToId());
+            });
+            groups.put(item.getGroupName(), toIds);
+        }
+        return ResponseVO.successResponse(new GetAllFriendShipGroupResp(groups));
     }
 }

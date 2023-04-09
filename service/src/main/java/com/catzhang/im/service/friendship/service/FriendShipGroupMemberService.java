@@ -18,4 +18,6 @@ public interface FriendShipGroupMemberService {
     ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(DeleteFriendShipGroupMemberReq req);
 
     ResponseVO<HandleDeleteFriendShipGroupMemberResp> handleDeleteFriendShipGroupMember(HandleDeleteFriendShipGroupMemberReq req);
+
+    ResponseVO<GetAllFriendShipGroupMemberResp> getAllFriendShipGroupMember(GetAllFriendShipGroupMemberReq req);
 }

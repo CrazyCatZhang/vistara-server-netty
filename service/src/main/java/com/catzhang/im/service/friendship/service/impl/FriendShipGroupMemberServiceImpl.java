@@ -97,6 +97,7 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
         if (friendShipGroupMemberEntities.size() == 0) {
             return ResponseVO.errorResponse(FriendShipErrorCode.NO_FRIENDS_IN_THE_GROUP);
         }
+
         int delete = friendShipGroupMemberMapper.delete(lambdaQueryWrapper);
         if (delete == 0) {
             return ResponseVO.successResponse(FriendShipErrorCode.FAILED_TO_CLEAR_GROUP_FRIENDS);
@@ -155,5 +156,17 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
             result = 0;
         }
         return ResponseVO.successResponse(new HandleDeleteFriendShipGroupMemberResp(result));
+    }
+
+    @Override
+    public ResponseVO<GetAllFriendShipGroupMemberResp> getAllFriendShipGroupMember(GetAllFriendShipGroupMemberReq req) {
+        LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
+        List<FriendShipGroupMemberEntity> friendShipGroupMemberEntities = friendShipGroupMemberMapper.selectList(lambdaQueryWrapper);
+        if (friendShipGroupMemberEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.NO_FRIENDS_IN_THE_GROUP);
+        } else {
+            return ResponseVO.successResponse(new GetAllFriendShipGroupMemberResp(friendShipGroupMemberEntities));
+        }
     }
 }
