@@ -1,12 +1,15 @@
 package com.catzhang.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.AddGroupMemberReq;
+import com.catzhang.im.service.group.model.req.GetJoinedGroupReq;
 import com.catzhang.im.service.group.model.req.GetRoleInGroupReq;
 import com.catzhang.im.service.group.model.req.GroupMemberDto;
 import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
@@ -19,6 +22,10 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * @author crazycatzhang
@@ -104,5 +111,25 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         getRoleInGroupResp.setMemberId(groupMemberEntity.getMemberId());
 
         return ResponseVO.successResponse(getRoleInGroupResp);
+    }
+
+    @Override
+    public ResponseVO<Collection<String>> getMemberJoinedGroup(GetJoinedGroupReq req) {
+
+        if (req.getLimit() != null) {
+            Page<GroupMemberEntity> resultPage = new Page<>(req.getOffset(), req.getLimit());
+            LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+            lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                    .like(GroupMemberEntity::getMemberId, req.getMemberId());
+            IPage<GroupMemberEntity> groupMemberEntityPage = groupMemberMapper.selectPage(resultPage, lambdaQueryWrapper);
+            HashSet<String> groupIds = new HashSet<>();
+            List<GroupMemberEntity> records = groupMemberEntityPage.getRecords();
+            for (GroupMemberEntity record : records) {
+                groupIds.add(record.getGroupId());
+            }
+            return ResponseVO.successResponse(groupIds);
+        } else {
+            return ResponseVO.successResponse(groupMemberMapper.getJoinedGroupId(req.getAppId(), req.getMemberId()));
+        }
     }
 }

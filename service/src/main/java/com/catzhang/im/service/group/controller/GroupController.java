@@ -2,9 +2,11 @@ package com.catzhang.im.service.group.controller;
 
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.group.model.req.CreateGroupReq;
+import com.catzhang.im.service.group.model.req.GetJoinedGroupReq;
 import com.catzhang.im.service.group.model.req.ImportGroupReq;
 import com.catzhang.im.service.group.model.req.UpdateGroupInfoReq;
 import com.catzhang.im.service.group.model.resp.CreateGroupResp;
+import com.catzhang.im.service.group.model.resp.GetJoinedGroupResp;
 import com.catzhang.im.service.group.model.resp.ImportGroupResp;
 import com.catzhang.im.service.group.model.resp.UpdateGroupInfoResp;
 import com.catzhang.im.service.group.service.GroupService;
@@ -35,5 +37,10 @@ public class GroupController {
     @PutMapping("update")
     public ResponseVO<UpdateGroupInfoResp> updateGroupInfo(@RequestBody @Validated UpdateGroupInfoReq req) {
         return groupService.updateGroupInfo(req);
+    }
+
+    @GetMapping("getJoinedGroup")
+    public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req) {
+        return groupService.getJoinedGroup(req);
     }
 }

@@ -1,6 +1,7 @@
 package com.catzhang.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
@@ -183,5 +184,40 @@ public class GroupServiceImpl implements GroupService {
         }
 
         return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
+    }
+
+    @Override
+    public ResponseVO<GetJoinedGroupResp> getJoinedGroup(GetJoinedGroupReq req) {
+
+        ResponseVO<Collection<String>> memberJoinedGroup = groupMemberService.getMemberJoinedGroup(req);
+        if (!memberJoinedGroup.isOk()) {
+            return ResponseVO.errorResponse(memberJoinedGroup.getCode(), memberJoinedGroup.getMsg());
+        }
+
+        GetJoinedGroupResp resp = new GetJoinedGroupResp();
+
+        if (CollectionUtils.isEmpty(memberJoinedGroup.getData())) {
+            resp.setTotalCount(0);
+            resp.setGroupList(new ArrayList<>());
+            return ResponseVO.successResponse(resp);
+        }
+
+        LambdaQueryWrapper<GroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .in(GroupEntity::getGroupId, memberJoinedGroup.getData());
+
+        if (CollectionUtils.isNotEmpty(req.getGroupType())) {
+            lambdaQueryWrapper.in(GroupEntity::getGroupType, req.getGroupType());
+        }
+
+        List<GroupEntity> groupEntities = groupMapper.selectList(lambdaQueryWrapper);
+        resp.setGroupList(groupEntities);
+        if (req.getLimit() == null) {
+            resp.setTotalCount(groupEntities.size());
+        } else {
+            resp.setTotalCount(groupMapper.selectCount(lambdaQueryWrapper));
+        }
+
+        return ResponseVO.successResponse(resp);
     }
 }
