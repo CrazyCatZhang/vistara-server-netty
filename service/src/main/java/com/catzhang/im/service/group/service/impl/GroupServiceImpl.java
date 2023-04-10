@@ -72,6 +72,7 @@ public class GroupServiceImpl implements GroupService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<CreateGroupResp> createGroup(CreateGroupReq req) {
 
         boolean isAdmin = false;
@@ -251,5 +252,49 @@ public class GroupServiceImpl implements GroupService {
         }
 
         return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<TransferGroupResp> transferGroup(TransferGroupReq req) {
+
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        getRoleInGroupReq.setMemberId(req.getOperator());
+        getRoleInGroupReq.setAppId(req.getAppId());
+        getRoleInGroupReq.setGroupId(req.getGroupId());
+        ResponseVO<GetRoleInGroupResp> roleInGroup = groupMemberService.getRoleInGroup(getRoleInGroupReq);
+        if (!roleInGroup.isOk()) {
+            return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+        }
+
+        if (roleInGroup.getData().getRole() != GroupMemberRole.OWNER.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCode.THIS_OPERATE_NEED_OWNER_ROLE);
+        }
+
+        getRoleInGroupReq.setMemberId(req.getOwnerId());
+        ResponseVO<GetRoleInGroupResp> newOwner = groupMemberService.getRoleInGroup(getRoleInGroupReq);
+        if (!newOwner.isOk()) {
+            return ResponseVO.errorResponse(newOwner.getCode(), newOwner.getMsg());
+        }
+
+        LambdaQueryWrapper<GroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .like(GroupEntity::getGroupId, req.getGroupId());
+        GroupEntity groupEntity = groupMapper.selectOne(lambdaQueryWrapper);
+        if (groupEntity.getStatus() == GroupStatus.DESTROY.getCode()) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
+        }
+
+        groupEntity.setOwnerId(req.getOwnerId());
+        groupEntity.setUpdateTime(System.currentTimeMillis());
+        groupMapper.update(groupEntity, lambdaQueryWrapper);
+        TransferGroupMemberReq transferGroupMemberReq = new TransferGroupMemberReq();
+        transferGroupMemberReq.setOwner(req.getOwnerId());
+        transferGroupMemberReq.setAppId(req.getAppId());
+        transferGroupMemberReq.setGroupId(req.getGroupId());
+        groupMemberService.transferGroupMember(transferGroupMemberReq);
+
+
+        return ResponseVO.successResponse(new TransferGroupResp(groupEntity));
     }
 }

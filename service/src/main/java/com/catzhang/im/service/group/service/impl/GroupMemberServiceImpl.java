@@ -1,18 +1,17 @@
 package com.catzhang.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
-import com.catzhang.im.service.group.model.req.AddGroupMemberReq;
-import com.catzhang.im.service.group.model.req.GetJoinedGroupReq;
-import com.catzhang.im.service.group.model.req.GetRoleInGroupReq;
-import com.catzhang.im.service.group.model.req.GroupMemberDto;
+import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
 import com.catzhang.im.service.group.model.resp.GetRoleInGroupResp;
+import com.catzhang.im.service.group.model.resp.TransferGroupMemberResp;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
@@ -130,5 +129,31 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         } else {
             return ResponseVO.successResponse(groupMemberMapper.getJoinedGroupId(req.getAppId(), req.getMemberId()));
         }
+    }
+
+    @Override
+    public ResponseVO<TransferGroupMemberResp> transferGroupMember(TransferGroupMemberReq req) {
+
+        LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getRole, GroupMemberRole.OWNER.getCode())
+                .set(GroupMemberEntity::getRole, GroupMemberRole.ORDINARY.getCode());
+        groupMemberMapper.update(null, lambdaUpdateWrapper);
+
+        LambdaUpdateWrapper<GroupMemberEntity> newOwnerUpdateWrapper = new LambdaUpdateWrapper<>();
+        newOwnerUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getOwner())
+                .set(GroupMemberEntity::getRole, GroupMemberRole.OWNER.getCode());
+        groupMemberMapper.update(null, newOwnerUpdateWrapper);
+
+        LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getOwner());
+        GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
+
+        return ResponseVO.successResponse(new TransferGroupMemberResp(groupMemberEntity));
     }
 }

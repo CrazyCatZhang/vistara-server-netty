@@ -38,6 +38,11 @@ public class GroupController {
         return groupService.destroyGroup(req);
     }
 
+    @PutMapping("transfer")
+    public ResponseVO<TransferGroupResp> transferGroup(@RequestBody @Validated TransferGroupReq req) {
+        return groupService.transferGroup(req);
+    }
+
     @GetMapping("getJoinedGroup")
     public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req) {
         return groupService.getJoinedGroup(req);

@@ -18,4 +18,6 @@ public interface GroupService {
     ResponseVO<GetJoinedGroupResp> getJoinedGroup(GetJoinedGroupReq req);
 
     ResponseVO<DestroyGroupResp> destroyGroup(DestroyGroupReq req);
+
+    ResponseVO<TransferGroupResp> transferGroup(TransferGroupReq req);
 }
