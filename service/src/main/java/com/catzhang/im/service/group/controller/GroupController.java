@@ -48,7 +48,12 @@ public class GroupController {
         return groupService.getGroup(req);
     }
 
-    @GetMapping("getJoinedGroup")
+    @PutMapping("mute")
+    public ResponseVO<MuteGroupResp> muteGroup(@RequestBody @Validated MuteGroupReq req) {
+        return groupService.muteGroup(req);
+    }
+
+    @GetMapping("getJoined")
     public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req) {
         return groupService.getJoinedGroup(req);
     }

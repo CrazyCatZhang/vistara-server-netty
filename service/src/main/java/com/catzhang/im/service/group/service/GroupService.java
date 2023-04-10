@@ -25,4 +25,6 @@ public interface GroupService {
     ResponseVO<GetGroupResp> getGroup(GetGroupReq req);
 
     ResponseVO<GroupEntity> handleGetGroup(GetGroupReq req);
+
+    ResponseVO<MuteGroupResp> muteGroup(MuteGroupReq req);
 }

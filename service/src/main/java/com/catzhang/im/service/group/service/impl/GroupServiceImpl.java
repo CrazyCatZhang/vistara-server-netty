@@ -1,6 +1,7 @@
 package com.catzhang.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.GroupErrorCode;
@@ -333,5 +334,51 @@ public class GroupServiceImpl implements GroupService {
         }
 
         return ResponseVO.successResponse(groupEntity);
+    }
+
+    @Override
+    public ResponseVO<MuteGroupResp> muteGroup(MuteGroupReq req) {
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setGroupId(req.getGroupId());
+        getGroupReq.setAppId(req.getAppId());
+        ResponseVO<GroupEntity> groupEntityResponseVO = this.handleGetGroup(getGroupReq);
+        if (!groupEntityResponseVO.isOk()) {
+            return ResponseVO.errorResponse(groupEntityResponseVO.getCode(), groupEntityResponseVO.getMsg());
+        }
+
+        GroupEntity data = groupEntityResponseVO.getData();
+        if (data.getStatus() == GroupStatus.DESTROY.getCode()) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
+        }
+
+        boolean isAdmin = false;
+
+        if (!isAdmin) {
+            GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+            getRoleInGroupReq.setMemberId(req.getOperator());
+            getRoleInGroupReq.setGroupId(req.getGroupId());
+            getRoleInGroupReq.setAppId(req.getAppId());
+            ResponseVO<GetRoleInGroupResp> roleInGroup = groupMemberService.getRoleInGroup(getRoleInGroupReq);
+            if (!roleInGroup.isOk()) {
+                return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+            }
+
+            Integer role = roleInGroup.getData().getRole();
+            boolean isManage = role == GroupMemberRole.ADMINISTRATOR.getCode() || role == GroupMemberRole.OWNER.getCode();
+
+            if (!isManage && data.getGroupType() == GroupType.PUBLIC.getCode()) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+            }
+        }
+
+        data.setMute(req.getMute());
+        LambdaUpdateWrapper<GroupEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .like(GroupEntity::getGroupId, req.getGroupId())
+                .set(GroupEntity::getMute, req.getMute());
+        groupMapper.update(null, lambdaUpdateWrapper);
+
+        return ResponseVO.successResponse(new MuteGroupResp(data));
     }
 }
