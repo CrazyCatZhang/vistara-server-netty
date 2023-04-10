@@ -1,14 +1,8 @@
 package com.catzhang.im.service.group.service;
 
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.service.group.model.req.CreateGroupReq;
-import com.catzhang.im.service.group.model.req.GetJoinedGroupReq;
-import com.catzhang.im.service.group.model.req.ImportGroupReq;
-import com.catzhang.im.service.group.model.req.UpdateGroupInfoReq;
-import com.catzhang.im.service.group.model.resp.CreateGroupResp;
-import com.catzhang.im.service.group.model.resp.GetJoinedGroupResp;
-import com.catzhang.im.service.group.model.resp.ImportGroupResp;
-import com.catzhang.im.service.group.model.resp.UpdateGroupInfoResp;
+import com.catzhang.im.service.group.model.req.*;
+import com.catzhang.im.service.group.model.resp.*;
 
 /**
  * @author crazycatzhang
@@ -22,4 +16,6 @@ public interface GroupService {
     ResponseVO<UpdateGroupInfoResp> updateGroupInfo(UpdateGroupInfoReq req);
 
     ResponseVO<GetJoinedGroupResp> getJoinedGroup(GetJoinedGroupReq req);
+
+    ResponseVO<DestroyGroupResp> destroyGroup(DestroyGroupReq req);
 }

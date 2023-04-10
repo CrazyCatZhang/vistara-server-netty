@@ -9,9 +9,9 @@ import com.catzhang.im.common.exception.ApplicationExceptionEnum;
 
 public enum GroupErrorCode implements ApplicationExceptionEnum {
 
-    GROUP_IS_NOT_EXIST(40000, "群不存在"),
+    GROUP_IS_NOT_EXIST(40000, "群组不存在"),
 
-    GROUP_IS_EXIST(40001, "群已存在"),
+    GROUP_IS_EXIST(40001, "群组已存在"),
 
     GROUP_IS_HAVE_OWNER(40002, "群已存在群主"),
 

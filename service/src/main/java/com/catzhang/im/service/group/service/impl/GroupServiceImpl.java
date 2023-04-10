@@ -216,4 +216,40 @@ public class GroupServiceImpl implements GroupService {
 
         return ResponseVO.successResponse(resp);
     }
+
+    @Override
+    @Transactional
+    public ResponseVO<DestroyGroupResp> destroyGroup(DestroyGroupReq req) {
+
+        boolean isAdmin = false;
+
+        LambdaQueryWrapper<GroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .like(GroupEntity::getGroupId, req.getGroupId());
+        GroupEntity groupEntity = groupMapper.selectOne(lambdaQueryWrapper);
+        if (groupEntity == null) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_NOT_EXIST);
+        }
+
+        if (groupEntity.getStatus() == GroupStatus.DESTROY.getCode()) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
+        }
+
+        if (!isAdmin) {
+            if (groupEntity.getGroupType() == GroupType.PRIVATE.getCode()) {
+                throw new ApplicationException(GroupErrorCode.PRIVATE_GROUP_CAN_NOT_DESTORY);
+            }
+            if (groupEntity.getGroupType() == GroupType.PUBLIC.getCode() && !groupEntity.getOwnerId().equals(req.getOperator())) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_OWNER_ROLE);
+            }
+        }
+
+        groupEntity.setStatus(GroupStatus.DESTROY.getCode());
+        int update = groupMapper.update(groupEntity, lambdaQueryWrapper);
+        if (update != 1) {
+            throw new ApplicationException(GroupErrorCode.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+
+        return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
+    }
 }
