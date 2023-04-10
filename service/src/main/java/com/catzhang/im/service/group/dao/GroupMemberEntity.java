@@ -13,7 +13,7 @@ import lombok.Data;
 @TableName("im_group_member")
 public class GroupMemberEntity {
 
-    @TableId(type = IdType.AUTO)
+    @TableId("group_member_id")
     private Long groupMemberId;
 
     private Integer appId;
