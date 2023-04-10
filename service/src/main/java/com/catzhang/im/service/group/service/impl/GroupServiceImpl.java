@@ -212,11 +212,7 @@ public class GroupServiceImpl implements GroupService {
 
         List<GroupEntity> groupEntities = groupMapper.selectList(lambdaQueryWrapper);
         resp.setGroupList(groupEntities);
-        if (req.getLimit() == null) {
-            resp.setTotalCount(groupEntities.size());
-        } else {
-            resp.setTotalCount(groupMapper.selectCount(lambdaQueryWrapper));
-        }
+        resp.setTotalCount(groupEntities.size());
 
         return ResponseVO.successResponse(resp);
     }
