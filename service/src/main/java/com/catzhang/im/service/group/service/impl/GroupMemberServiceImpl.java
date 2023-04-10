@@ -7,8 +7,10 @@ import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.AddGroupMemberReq;
+import com.catzhang.im.service.group.model.req.GetRoleInGroupReq;
 import com.catzhang.im.service.group.model.req.GroupMemberDto;
 import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
+import com.catzhang.im.service.group.model.resp.GetRoleInGroupResp;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
@@ -81,5 +83,26 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         return ResponseVO.errorResponse(GroupErrorCode.USER_IS_JOINED_GROUP);
+    }
+
+    @Override
+    public ResponseVO<GetRoleInGroupResp> getRoleInGroup(GetRoleInGroupReq req) {
+        GetRoleInGroupResp getRoleInGroupResp = new GetRoleInGroupResp();
+
+        LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getMemberId());
+        GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
+        if (groupMemberEntity == null || groupMemberEntity.getRole() == GroupMemberRole.LEAVE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCode.MEMBER_IS_NOT_JOINED_GROUP);
+        }
+
+        getRoleInGroupResp.setGroupMemberId(groupMemberEntity.getGroupMemberId());
+        getRoleInGroupResp.setRole(groupMemberEntity.getRole());
+        getRoleInGroupResp.setSpeakDate(groupMemberEntity.getSpeakDate());
+        getRoleInGroupResp.setMemberId(groupMemberEntity.getMemberId());
+
+        return ResponseVO.successResponse(getRoleInGroupResp);
     }
 }

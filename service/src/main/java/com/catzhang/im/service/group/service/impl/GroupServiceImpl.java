@@ -10,19 +10,15 @@ import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMapper;
-import com.catzhang.im.service.group.model.req.AddGroupMemberReq;
-import com.catzhang.im.service.group.model.req.CreateGroupReq;
-import com.catzhang.im.service.group.model.req.GroupMemberDto;
-import com.catzhang.im.service.group.model.req.ImportGroupReq;
-import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
-import com.catzhang.im.service.group.model.resp.CreateGroupResp;
-import com.catzhang.im.service.group.model.resp.ImportGroupResp;
+import com.catzhang.im.service.group.model.req.*;
+import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import com.catzhang.im.service.group.service.GroupService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -141,5 +137,51 @@ public class GroupServiceImpl implements GroupService {
         groupInfo.put(req.getGroupName(), members);
 
         return ResponseVO.successResponse(new CreateGroupResp(groupInfo, failureMembers));
+    }
+
+    @Override
+    @Transactional
+    public ResponseVO<UpdateGroupInfoResp> updateGroupInfo(UpdateGroupInfoReq req) {
+
+        LambdaQueryWrapper<GroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .like(GroupEntity::getGroupId, req.getGroupId());
+        GroupEntity groupEntity = groupMapper.selectOne(lambdaQueryWrapper);
+        if (groupEntity == null) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_NOT_EXIST);
+        }
+
+        if (groupEntity.getStatus() == GroupStatus.DESTROY.getCode()) {
+            throw new ApplicationException(GroupErrorCode.GROUP_IS_DESTROY);
+        }
+
+        boolean isAdmin = false;
+        if (!isAdmin) {
+            GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+            getRoleInGroupReq.setGroupId(req.getGroupId());
+            getRoleInGroupReq.setAppId(req.getAppId());
+            getRoleInGroupReq.setMemberId(req.getOperator());
+            ResponseVO<GetRoleInGroupResp> roleInGroup = groupMemberService.getRoleInGroup(getRoleInGroupReq);
+            if (!roleInGroup.isOk()) {
+                return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+            }
+
+            GetRoleInGroupResp data = roleInGroup.getData();
+            Integer roleInfo = data.getRole();
+
+            boolean isManager = roleInfo == GroupMemberRole.ADMINISTRATOR.getCode() || roleInfo == GroupMemberRole.OWNER.getCode();
+            if (!isManager && groupEntity.getGroupType() == GroupType.PUBLIC.getCode()) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+            }
+        }
+
+        BeanUtils.copyProperties(req, groupEntity);
+        groupEntity.setUpdateTime(System.currentTimeMillis());
+        int update = groupMapper.update(groupEntity, lambdaQueryWrapper);
+        if (update != 1) {
+            throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+        }
+
+        return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
     }
 }
