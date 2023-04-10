@@ -1,6 +1,7 @@
 package com.catzhang.im.service.group.service;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 
@@ -20,4 +21,8 @@ public interface GroupService {
     ResponseVO<DestroyGroupResp> destroyGroup(DestroyGroupReq req);
 
     ResponseVO<TransferGroupResp> transferGroup(TransferGroupReq req);
+
+    ResponseVO<GetGroupResp> getGroup(GetGroupReq req);
+
+    ResponseVO<GroupEntity> handleGetGroup(GetGroupReq req);
 }

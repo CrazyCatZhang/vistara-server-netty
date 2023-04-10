@@ -43,6 +43,11 @@ public class GroupController {
         return groupService.transferGroup(req);
     }
 
+    @GetMapping("get")
+    public ResponseVO<GetGroupResp> getGroup(@RequestBody @Validated GetGroupReq req) {
+        return groupService.getGroup(req);
+    }
+
     @GetMapping("getJoinedGroup")
     public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req) {
         return groupService.getJoinedGroup(req);

@@ -292,9 +292,46 @@ public class GroupServiceImpl implements GroupService {
         transferGroupMemberReq.setOwner(req.getOwnerId());
         transferGroupMemberReq.setAppId(req.getAppId());
         transferGroupMemberReq.setGroupId(req.getGroupId());
-        groupMemberService.transferGroupMember(transferGroupMemberReq);
+        ResponseVO<TransferGroupMemberResp> transferGroupMemberRespResponseVO = groupMemberService.transferGroupMember(transferGroupMemberReq);
 
+        return ResponseVO.successResponse(new TransferGroupResp(groupEntity, transferGroupMemberRespResponseVO.getData().getGroupMember()));
+    }
 
-        return ResponseVO.successResponse(new TransferGroupResp(groupEntity));
+    @Override
+    public ResponseVO<GetGroupResp> getGroup(GetGroupReq req) {
+
+        ResponseVO<GroupEntity> groupEntityResponseVO = this.handleGetGroup(req);
+        if (!groupEntityResponseVO.isOk()) {
+            return ResponseVO.errorResponse(groupEntityResponseVO.getCode(), groupEntityResponseVO.getMsg());
+        }
+        GetGroupResp getGroupResp = new GetGroupResp();
+        BeanUtils.copyProperties(groupEntityResponseVO.getData(), getGroupResp);
+        try {
+            GetGroupMemberReq getGroupMemberReq = new GetGroupMemberReq();
+            getGroupMemberReq.setAppId(req.getAppId());
+            getGroupMemberReq.setGroupId(req.getGroupId());
+            ResponseVO<List<GroupMemberDto>> groupMember = groupMemberService.getGroupMember(getGroupMemberReq);
+            if (groupMember.isOk()) {
+                getGroupResp.setMemberList(groupMember.getData());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return ResponseVO.successResponse(getGroupResp);
+    }
+
+    @Override
+    public ResponseVO<GroupEntity> handleGetGroup(GetGroupReq req) {
+
+        LambdaQueryWrapper<GroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.like(GroupEntity::getAppId, req.getAppId())
+                .like(GroupEntity::getGroupId, req.getGroupId());
+        GroupEntity groupEntity = groupMapper.selectOne(lambdaQueryWrapper);
+        if (groupEntity == null) {
+            return ResponseVO.errorResponse(GroupErrorCode.GROUP_IS_NOT_EXIST);
+        }
+
+        return ResponseVO.successResponse(groupEntity);
     }
 }

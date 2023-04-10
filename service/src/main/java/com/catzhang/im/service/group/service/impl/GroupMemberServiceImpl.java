@@ -156,4 +156,10 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         return ResponseVO.successResponse(new TransferGroupMemberResp(groupMemberEntity));
     }
+
+    @Override
+    public ResponseVO<List<GroupMemberDto>> getGroupMember(GetGroupMemberReq req) {
+        List<GroupMemberDto> groupMember = groupMemberMapper.getGroupMember(req.getAppId(), req.getGroupId());
+        return ResponseVO.successResponse(groupMember);
+    }
 }

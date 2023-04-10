@@ -1,6 +1,7 @@
 package com.catzhang.im.service.group.model.resp;
 
 import com.catzhang.im.service.group.dao.GroupEntity;
+import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -12,5 +13,7 @@ import lombok.Data;
 public class TransferGroupResp {
 
     private GroupEntity transferGroup;
+
+    private GroupMemberEntity groupMemberEntity;
 
 }
