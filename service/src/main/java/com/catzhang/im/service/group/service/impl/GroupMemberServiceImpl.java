@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
+import com.catzhang.im.common.enums.GroupType;
+import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.*;
@@ -195,6 +197,50 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             importGroupMemberResp.setResultMessage(addGroupMemberRespResponseVO.getMsg());
             resp.add(importGroupMemberResp);
         }
+
+        return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public ResponseVO<List<AddMemberResp>> addMember(AddMemberReq req) {
+
+        List<AddMemberResp> resp = new ArrayList<>();
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupId());
+
+        AddGroupMemberReq addGroupMemberReq = new AddGroupMemberReq();
+        BeanUtils.copyProperties(getGroupReq, addGroupMemberReq);
+
+        ResponseVO<GetGroupResp> group = groupService.getGroup(getGroupReq);
+        if (!group.isOk()) {
+            return ResponseVO.errorResponse(group.getCode(), group.getMsg());
+        }
+
+        List<GroupMemberDto> members = req.getMembers();
+        GetGroupResp data = group.getData();
+        boolean isAdmin = false;
+
+        if (!isAdmin && data.getGroupType() == GroupType.PUBLIC.getCode()) {
+            throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_APPMANAGER_ROLE);
+        }
+
+
+        members.forEach(member -> {
+            addGroupMemberReq.setGroupMember(member);
+            ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = this.addGroupMember(addGroupMemberReq);
+            AddMemberResp addMemberResp = new AddMemberResp();
+            addMemberResp.setMemberId(member.getMemberId());
+            if (!addGroupMemberRespResponseVO.isOk()) {
+                addMemberResp.setResult(0);
+            } else if (addGroupMemberRespResponseVO.getCode() == GroupErrorCode.USER_IS_JOINED_GROUP.getCode()) {
+                addMemberResp.setResult(2);
+            } else {
+                addMemberResp.setResult(1);
+            }
+            addMemberResp.setResultMessage(addGroupMemberRespResponseVO.getMsg());
+            resp.add(addMemberResp);
+        });
 
         return ResponseVO.successResponse(resp);
     }

@@ -1,7 +1,9 @@
 package com.catzhang.im.service.group.controller;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.service.group.model.req.AddMemberReq;
 import com.catzhang.im.service.group.model.req.ImportGroupMemberReq;
+import com.catzhang.im.service.group.model.resp.AddMemberResp;
 import com.catzhang.im.service.group.model.resp.ImportGroupMemberResp;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,11 @@ public class GroupMemberController {
     @PostMapping("import")
     public ResponseVO<List<ImportGroupMemberResp>> importGroupMember(@RequestBody @Validated ImportGroupMemberReq req) {
         return groupMemberService.importGroupMember(req);
+    }
+
+    @PostMapping("add")
+    public ResponseVO<List<AddMemberResp>> addMember(@RequestBody @Validated AddMemberReq req) {
+        return groupMemberService.addMember(req);
     }
 
 }
