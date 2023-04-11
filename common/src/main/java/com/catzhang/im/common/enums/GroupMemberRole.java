@@ -22,9 +22,14 @@ public enum GroupMemberRole {
     OWNER(2),
 
     /**
+     * 禁言
+     */
+    MUTE(3),
+
+    /**
      * 离开
      */
-    LEAVE(3);;
+    LEAVE(4);
 
 
     private final int code;

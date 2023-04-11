@@ -47,7 +47,10 @@ public enum GroupErrorCode implements ApplicationExceptionEnum {
 
     GROUP_IS_DESTROY(40018, "群组已解散"),
 
-    CREATE_GROUP_IS_FAILED(40019, "创建群组失败");
+    CREATE_GROUP_IS_FAILED(40019, "创建群组失败"),
+
+    FAILED_TO_REMOVE_GROUP_MEMBERS(40020,"移除群成员失败")
+    ;
 
     private final int code;
     private final String error;

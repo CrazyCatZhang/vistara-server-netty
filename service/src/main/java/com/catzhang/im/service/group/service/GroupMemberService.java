@@ -25,4 +25,8 @@ public interface GroupMemberService {
     ResponseVO<TransferGroupMemberResp> transferGroupMember(TransferGroupMemberReq req);
 
     ResponseVO<List<GroupMemberDto>> getGroupMember(GetGroupMemberReq req);
+
+    ResponseVO<RemoveMemberResp> removeMember(RemoveMemberReq req);
+
+    ResponseVO<RemoveMemberResp> removeGroupMember(RemoveMemberReq req);
 }

@@ -8,6 +8,7 @@ import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.common.enums.GroupType;
 import com.catzhang.im.common.exception.ApplicationException;
+import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.*;
@@ -225,7 +226,6 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_APPMANAGER_ROLE);
         }
 
-
         members.forEach(member -> {
             addGroupMemberReq.setGroupMember(member);
             ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = this.addGroupMember(addGroupMemberReq);
@@ -243,5 +243,104 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         });
 
         return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public ResponseVO<RemoveMemberResp> removeMember(RemoveMemberReq req) {
+
+        boolean isAdmin = false;
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setGroupId(req.getGroupId());
+        getGroupReq.setAppId(req.getAppId());
+        ResponseVO<GroupEntity> group = groupService.handleGetGroup(getGroupReq);
+        if (!group.isOk()) {
+            return ResponseVO.errorResponse(group.getCode(), group.getMsg());
+        }
+
+        GroupEntity data = group.getData();
+
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        getRoleInGroupReq.setGroupId(req.getGroupId());
+        getRoleInGroupReq.setAppId(req.getAppId());
+        getRoleInGroupReq.setMemberId(req.getOperator());
+
+        if (!isAdmin) {
+            ResponseVO<GetRoleInGroupResp> roleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+            if (!roleInGroup.isOk()) {
+                return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+            }
+
+            Integer role = roleInGroup.getData().getRole();
+
+            boolean isAdministrator = role == GroupMemberRole.ADMINISTRATOR.getCode();
+            boolean isOwner = role == GroupMemberRole.OWNER.getCode();
+
+            if (!isAdministrator && !isOwner) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+            }
+
+            if (!isOwner && data.getGroupType() == GroupType.PRIVATE.getCode()) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_OWNER_ROLE);
+            }
+
+            if (data.getGroupType() == GroupType.PUBLIC.getCode()) {
+                getRoleInGroupReq.setMemberId(req.getMemberId());
+                ResponseVO<GetRoleInGroupResp> removedMemberRoleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+                if (!removedMemberRoleInGroup.isOk()) {
+                    return ResponseVO.errorResponse(removedMemberRoleInGroup.getCode(), removedMemberRoleInGroup.getMsg());
+                }
+
+                Integer removedRole = removedMemberRoleInGroup.getData().getRole();
+                if (removedRole == GroupMemberRole.OWNER.getCode()) {
+                    throw new ApplicationException(GroupErrorCode.GROUP_OWNER_IS_NOT_REMOVE);
+                }
+
+                if (isAdministrator && removedRole != GroupMemberRole.ORDINARY.getCode()) {
+                    throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_OWNER_ROLE);
+                }
+            }
+        }
+
+        ResponseVO<RemoveMemberResp> removeMemberRespResponseVO = this.removeGroupMember(req);
+        if (!removeMemberRespResponseVO.isOk()) {
+            return ResponseVO.errorResponse(removeMemberRespResponseVO.getCode(), removeMemberRespResponseVO.getMsg());
+        }
+        return ResponseVO.successResponse(removeMemberRespResponseVO.getData());
+    }
+
+    @Override
+    public ResponseVO<RemoveMemberResp> removeGroupMember(RemoveMemberReq req) {
+
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setAppId(req.getAppId());
+        getSingleUserInfoReq.setUserId(req.getMemberId());
+
+        ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
+        if (!singleUserInfo.isOk()) {
+            return ResponseVO.errorResponse(singleUserInfo.getCode(), singleUserInfo.getMsg());
+        }
+
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        getRoleInGroupReq.setMemberId(req.getMemberId());
+        getRoleInGroupReq.setAppId(req.getAppId());
+        getRoleInGroupReq.setGroupId(req.getGroupId());
+
+        ResponseVO<GetRoleInGroupResp> roleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+        if (!roleInGroup.isOk()) {
+            return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+        }
+
+        GetRoleInGroupResp data = roleInGroup.getData();
+        LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getMemberId())
+                .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
+                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
+        int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
+        if (update != 1) {
+            return ResponseVO.errorResponse(GroupErrorCode.FAILED_TO_REMOVE_GROUP_MEMBERS);
+        }
+        return ResponseVO.successResponse(new RemoveMemberResp(req.getMemberId()));
     }
 }
