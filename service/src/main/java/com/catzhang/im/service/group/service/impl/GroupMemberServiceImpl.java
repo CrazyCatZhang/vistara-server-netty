@@ -381,4 +381,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         return ResponseVO.successResponse(new ExitGroupResp(req.getOperator()));
     }
+
+    @Override
+    public List<String> getGroupMemberId(GetGroupMemberIdReq req) {
+        return groupMemberMapper.getGroupMemberId(req.getAppId(), req.getGroupId());
+    }
 }

@@ -36,4 +36,9 @@ public interface GroupMemberMapper extends BaseMapper<GroupMemberEntity> {
             " join_type " +
             " from im_group_member where app_id = #{appId} AND group_id = #{groupId} ")
     List<GroupMemberDto> getGroupMember(Integer appId, String groupId);
+
+    @Select("select " +
+            " member_id " +
+            " from im_group_member where app_id = #{appId} AND group_id = #{groupId} AND role != 4")
+    List<String> getGroupMemberId(Integer appId, String groupId);
 }

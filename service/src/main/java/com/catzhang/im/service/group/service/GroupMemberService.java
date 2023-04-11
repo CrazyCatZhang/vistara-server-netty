@@ -22,6 +22,8 @@ public interface GroupMemberService {
 
     ResponseVO<Collection<String>> getMemberJoinedGroup(GetJoinedGroupReq req);
 
+    List<String> getGroupMemberId(GetGroupMemberIdReq req);
+
     ResponseVO<TransferGroupMemberResp> transferGroupMember(TransferGroupMemberReq req);
 
     ResponseVO<List<GroupMemberDto>> getGroupMember(GetGroupMemberReq req);
