@@ -9,10 +9,9 @@ import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.*;
-import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
-import com.catzhang.im.service.group.model.resp.GetRoleInGroupResp;
-import com.catzhang.im.service.group.model.resp.TransferGroupMemberResp;
+import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
+import com.catzhang.im.service.group.service.GroupService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
@@ -21,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +36,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    GroupService groupService;
 
     @Override
     @Transactional
@@ -161,5 +164,38 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public ResponseVO<List<GroupMemberDto>> getGroupMember(GetGroupMemberReq req) {
         List<GroupMemberDto> groupMember = groupMemberMapper.getGroupMember(req.getAppId(), req.getGroupId());
         return ResponseVO.successResponse(groupMember);
+    }
+
+    @Override
+    public ResponseVO<List<ImportGroupMemberResp>> importGroupMember(ImportGroupMemberReq req) {
+
+        List<ImportGroupMemberResp> resp = new ArrayList<>();
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupId());
+        AddGroupMemberReq addGroupMemberReq = new AddGroupMemberReq();
+        BeanUtils.copyProperties(getGroupReq, addGroupMemberReq);
+
+        ResponseVO<GetGroupResp> group = groupService.getGroup(getGroupReq);
+        if (!group.isOk()) {
+            return ResponseVO.errorResponse(group.getCode(), group.getMsg());
+        }
+        for (GroupMemberDto member : req.getMembers()) {
+            addGroupMemberReq.setGroupMember(member);
+            ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = this.addGroupMember(addGroupMemberReq);
+            ImportGroupMemberResp importGroupMemberResp = new ImportGroupMemberResp();
+            importGroupMemberResp.setMemberId(member.getMemberId());
+            if (!addGroupMemberRespResponseVO.isOk()) {
+                importGroupMemberResp.setResult(0);
+            } else if (addGroupMemberRespResponseVO.getCode() == GroupErrorCode.USER_IS_JOINED_GROUP.getCode()) {
+                importGroupMemberResp.setResult(2);
+            } else {
+                importGroupMemberResp.setResult(1);
+            }
+            importGroupMemberResp.setResultMessage(addGroupMemberRespResponseVO.getMsg());
+            resp.add(importGroupMemberResp);
+        }
+
+        return ResponseVO.successResponse(resp);
     }
 }
