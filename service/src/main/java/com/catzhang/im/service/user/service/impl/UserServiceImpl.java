@@ -13,6 +13,7 @@ import com.catzhang.im.service.user.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -133,6 +134,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<ModifyUserInfoResp> modifyUserInfo(ModifyUserInfoReq req) {
         LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(UserDataEntity::getAppId, req.getAppId())

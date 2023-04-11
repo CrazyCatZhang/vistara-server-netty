@@ -16,6 +16,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +36,7 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
     FriendShipGroupMemberService friendShipGroupMemberService;
 
     @Override
+    @Transactional
     public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(AddFriendShipGroupReq req) {
         LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
@@ -109,6 +111,7 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<DeleteFriendShipGroupResp> deleteFriendShipGroup(DeleteFriendShipGroupReq req) {
         Map<String, List<String>> successGroups = new HashMap<>();
         Map<String, String> failureGroups = new HashMap<>();

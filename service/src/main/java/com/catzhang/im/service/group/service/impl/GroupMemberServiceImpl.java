@@ -140,6 +140,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     }
 
     @Override
+    @Transactional
     public ResponseVO<TransferGroupMemberResp> transferGroupMember(TransferGroupMemberReq req) {
 
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
