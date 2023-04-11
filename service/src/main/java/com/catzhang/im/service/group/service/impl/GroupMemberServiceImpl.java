@@ -343,4 +343,42 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
         return ResponseVO.successResponse(new RemoveMemberResp(req.getMemberId()));
     }
+
+    @Override
+    public ResponseVO<ExitGroupResp> exitGroup(ExitGroupReq req) {
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupId());
+        ResponseVO<GroupEntity> groupEntityResponseVO = groupService.handleGetGroup(getGroupReq);
+        if (!groupEntityResponseVO.isOk()) {
+            return ResponseVO.errorResponse(groupEntityResponseVO.getCode(), groupEntityResponseVO.getMsg());
+        }
+
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        BeanUtils.copyProperties(getGroupReq, getRoleInGroupReq);
+        getRoleInGroupReq.setMemberId(req.getOperator());
+        ResponseVO<GetRoleInGroupResp> roleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+        if (!roleInGroup.isOk()) {
+            return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+        }
+
+        Integer role = roleInGroup.getData().getRole();
+        if (role == GroupMemberRole.OWNER.getCode()) {
+            throw new ApplicationException(GroupErrorCode.GROUP_OWNER_IS_NOT_REMOVE);
+        }
+
+        LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getOperator())
+                .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
+                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
+        int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
+        if (update != 1) {
+            throw new ApplicationException(GroupErrorCode.FAILED_TO_REMOVE_GROUP_MEMBERS);
+        }
+
+        return ResponseVO.successResponse(new ExitGroupResp(req.getOperator()));
+    }
 }

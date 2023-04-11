@@ -29,4 +29,6 @@ public interface GroupMemberService {
     ResponseVO<RemoveMemberResp> removeMember(RemoveMemberReq req);
 
     ResponseVO<RemoveMemberResp> removeGroupMember(RemoveMemberReq req);
+
+    ResponseVO<ExitGroupResp> exitGroup(ExitGroupReq req);
 }

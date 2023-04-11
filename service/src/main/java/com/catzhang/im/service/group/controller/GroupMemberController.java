@@ -2,9 +2,11 @@ package com.catzhang.im.service.group.controller;
 
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.group.model.req.AddMemberReq;
+import com.catzhang.im.service.group.model.req.ExitGroupReq;
 import com.catzhang.im.service.group.model.req.ImportGroupMemberReq;
 import com.catzhang.im.service.group.model.req.RemoveMemberReq;
 import com.catzhang.im.service.group.model.resp.AddMemberResp;
+import com.catzhang.im.service.group.model.resp.ExitGroupResp;
 import com.catzhang.im.service.group.model.resp.ImportGroupMemberResp;
 import com.catzhang.im.service.group.model.resp.RemoveMemberResp;
 import com.catzhang.im.service.group.service.GroupMemberService;
@@ -37,6 +39,11 @@ public class GroupMemberController {
     @DeleteMapping("remove")
     public ResponseVO<RemoveMemberResp> removeMember(@RequestBody @Validated RemoveMemberReq req) {
         return groupMemberService.removeMember(req);
+    }
+
+    @DeleteMapping("exit")
+    public ResponseVO<ExitGroupResp> exitGroup(@RequestBody @Validated ExitGroupReq req) {
+        return groupMemberService.exitGroup(req);
     }
 
 }
