@@ -1,14 +1,8 @@
 package com.catzhang.im.service.group.controller;
 
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.service.group.model.req.AddMemberReq;
-import com.catzhang.im.service.group.model.req.ExitGroupReq;
-import com.catzhang.im.service.group.model.req.ImportGroupMemberReq;
-import com.catzhang.im.service.group.model.req.RemoveMemberReq;
-import com.catzhang.im.service.group.model.resp.AddMemberResp;
-import com.catzhang.im.service.group.model.resp.ExitGroupResp;
-import com.catzhang.im.service.group.model.resp.ImportGroupMemberResp;
-import com.catzhang.im.service.group.model.resp.RemoveMemberResp;
+import com.catzhang.im.service.group.model.req.*;
+import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -44,6 +38,11 @@ public class GroupMemberController {
     @DeleteMapping("exit")
     public ResponseVO<ExitGroupResp> exitGroup(@RequestBody @Validated ExitGroupReq req) {
         return groupMemberService.exitGroup(req);
+    }
+
+    @PutMapping("update")
+    public ResponseVO<UpdateGroupMemberResp> updateGroupMember(@RequestBody @Validated UpdateGroupMemberReq req) {
+        return groupMemberService.updateGroupMember(req);
     }
 
 }

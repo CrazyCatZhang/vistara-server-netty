@@ -49,8 +49,9 @@ public enum GroupErrorCode implements ApplicationExceptionEnum {
 
     CREATE_GROUP_IS_FAILED(40019, "创建群组失败"),
 
-    FAILED_TO_REMOVE_GROUP_MEMBERS(40020,"移除群成员失败")
-    ;
+    FAILED_TO_REMOVE_GROUP_MEMBERS(40020, "移除群成员失败"),
+
+    GROUP_OWNER_CAN_ONLY_TRANSFER(40021, "群主只能转让");
 
     private final int code;
     private final String error;
