@@ -37,4 +37,6 @@ public interface GroupMemberService {
     ResponseVO<ExitGroupResp> exitGroup(ExitGroupReq req);
 
     ResponseVO<UpdateGroupMemberResp> updateGroupMember(UpdateGroupMemberReq req);
+
+    ResponseVO<SpeakMemberResp> speakMember(SpeakMemberReq req);
 }

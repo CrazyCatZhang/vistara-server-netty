@@ -45,4 +45,9 @@ public class GroupMemberController {
         return groupMemberService.updateGroupMember(req);
     }
 
+    @PutMapping("speak")
+    public ResponseVO<SpeakMemberResp> speakMember(@RequestBody @Validated SpeakMemberReq req) {
+        return groupMemberService.speakMember(req);
+    }
+
 }

@@ -483,4 +483,75 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         return ResponseVO.successResponse(new UpdateGroupMemberResp(groupMemberEntity));
     }
+
+    @Override
+    public ResponseVO<SpeakMemberResp> speakMember(SpeakMemberReq req) {
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupId());
+
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        BeanUtils.copyProperties(getGroupReq, getRoleInGroupReq);
+
+        ResponseVO<GroupEntity> groupEntityResponseVO = groupService.handleGetGroup(getGroupReq);
+        if (!groupEntityResponseVO.isOk()) {
+            return ResponseVO.errorResponse(groupEntityResponseVO.getCode(), groupEntityResponseVO.getMsg());
+        }
+
+        boolean isAdmin = false;
+
+        if (!isAdmin) {
+            getRoleInGroupReq.setMemberId(req.getOperator());
+            ResponseVO<GetRoleInGroupResp> roleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+            if (!roleInGroup.isOk()) {
+                return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
+            }
+
+            Integer role = roleInGroup.getData().getRole();
+
+            boolean isAdministrator = role == GroupMemberRole.ADMINISTRATOR.getCode();
+            boolean isOwner = role == GroupMemberRole.OWNER.getCode();
+
+            if (!isAdministrator && !isOwner) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
+            }
+
+            getRoleInGroupReq.setMemberId(req.getMemberId());
+            ResponseVO<GetRoleInGroupResp> beOperatedRoleInGroup = this.getRoleInGroup(getRoleInGroupReq);
+            if (!beOperatedRoleInGroup.isOk()) {
+                return ResponseVO.errorResponse(beOperatedRoleInGroup.getCode(), beOperatedRoleInGroup.getMsg());
+            }
+
+            Integer operatedRole = beOperatedRoleInGroup.getData().getRole();
+            if (operatedRole == GroupMemberRole.OWNER.getCode()) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_APPMANAGER_ROLE);
+            }
+
+            if (isAdministrator && operatedRole != GroupMemberRole.ORDINARY.getCode()) {
+                throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_OWNER_ROLE);
+            }
+        }
+
+        LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
+                .like(GroupMemberEntity::getGroupId, req.getGroupId())
+                .like(GroupMemberEntity::getMemberId, req.getMemberId());
+        GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaUpdateWrapper);
+
+        if (req.getSpeakDate() > 0) {
+            groupMemberEntity.setSpeakDate(System.currentTimeMillis() + req.getSpeakDate());
+            lambdaUpdateWrapper.set(GroupMemberEntity::getSpeakDate, groupMemberEntity.getSpeakDate());
+        } else {
+            groupMemberEntity.setSpeakDate(req.getSpeakDate());
+            lambdaUpdateWrapper.set(GroupMemberEntity::getSpeakDate, req.getSpeakDate());
+        }
+
+        int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
+        if (update != 1) {
+            return ResponseVO.errorResponse(GroupErrorCode.MUTING_FAILED);
+        }
+
+        return ResponseVO.successResponse(new SpeakMemberResp(groupMemberEntity));
+    }
 }
