@@ -16,7 +16,7 @@ import java.util.List;
 @Mapper
 public interface GroupMemberMapper extends BaseMapper<GroupMemberEntity> {
 
-    @Select("select group_id from im_group_member where app_id = #{appId} AND member_id = #{memberId}")
+    @Select("select group_id from im_group_member where app_id = #{appId} and member_id = #{memberId}")
     List<String> getJoinedGroupId(Integer appId, String memberId);
 
     @Results({
@@ -34,11 +34,17 @@ public interface GroupMemberMapper extends BaseMapper<GroupMemberEntity> {
             " alias, " +
             " join_time ," +
             " join_type " +
-            " from im_group_member where app_id = #{appId} AND group_id = #{groupId} ")
+            " from im_group_member where app_id = #{appId} and group_id = #{groupId} ")
     List<GroupMemberDto> getGroupMember(Integer appId, String groupId);
 
     @Select("select " +
             " member_id " +
-            " from im_group_member where app_id = #{appId} AND group_id = #{groupId} AND role != 4")
+            " from im_group_member where app_id = #{appId} and group_id = #{groupId} and role != 4")
     List<String> getGroupMemberId(Integer appId, String groupId);
+
+    @Select("select " +
+            " member_id, " +
+            " role " +
+            " from im_group_member where app_id = #{appId} and group_id = #{groupId} and role in (1,2) ")
+    List<GroupMemberDto> getGroupManager(String groupId, Integer appId);
 }

@@ -386,4 +386,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public List<String> getGroupMemberId(GetGroupMemberIdReq req) {
         return groupMemberMapper.getGroupMemberId(req.getAppId(), req.getGroupId());
     }
+
+    @Override
+    public List<GroupMemberDto> getGroupManager(GetGroupManagerReq req) {
+        return groupMemberMapper.getGroupManager(req.getGroupId(),req.getAppId());
+    }
 }
