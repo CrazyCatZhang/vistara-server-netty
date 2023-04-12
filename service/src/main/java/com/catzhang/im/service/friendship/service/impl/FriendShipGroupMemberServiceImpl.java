@@ -9,6 +9,7 @@ import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
+import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
@@ -32,6 +33,9 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
     FriendShipGroupService friendShipGroupService;
 
     @Autowired
+    FriendShipService friendShipService;
+
+    @Autowired
     UserService userService;
 
     @Override
@@ -46,6 +50,21 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
             return ResponseVO.errorResponse(friendShipGroup.getCode(), friendShipGroup.getMsg());
         }
 
+        VerifyFriendShipReq verifyFriendShipReq = new VerifyFriendShipReq();
+        verifyFriendShipReq.setCheckType(2);
+        verifyFriendShipReq.setAppId(req.getAppId());
+        verifyFriendShipReq.setFromId(req.getFromId());
+        verifyFriendShipReq.setToIds(req.getToIds());
+        ResponseVO<List<VerifyFriendShipResp>> listResponseVO = friendShipService.verifyFriendShip(verifyFriendShipReq);
+
+        List<VerifyFriendShipResp> data = listResponseVO.getData();
+        List<String> isNotFriendIds = new ArrayList<>();
+        data.forEach(verifyFriendShipResp -> {
+            if (verifyFriendShipResp.getStatus() != 1) {
+                isNotFriendIds.add(verifyFriendShipResp.getToId());
+            }
+        });
+
         List<String> successIds = new ArrayList<>();
         List<String> failureIds = new ArrayList<>();
 
@@ -56,6 +75,9 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
 
         for (String toId :
                 req.getToIds()) {
+            if (isNotFriendIds.contains(toId)) {
+                continue;
+            }
             getSingleUserInfoReq.setUserId(toId);
             handleAddFriendShipGroupMemberReq.setToId(toId);
             ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
@@ -92,7 +114,7 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
     @Override
     public ResponseVO<ClearFriendShipGroupMemberResp> clearFriendShipGroupMember(ClearFriendShipGroupMemberReq req) {
         LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
+        lambdaQueryWrapper.eq(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
         List<FriendShipGroupMemberEntity> friendShipGroupMemberEntities = friendShipGroupMemberMapper.selectList(lambdaQueryWrapper);
         if (friendShipGroupMemberEntities.size() == 0) {
             return ResponseVO.errorResponse(FriendShipErrorCode.NO_FRIENDS_IN_THE_GROUP);
@@ -146,8 +168,8 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
     @Override
     public ResponseVO<HandleDeleteFriendShipGroupMemberResp> handleDeleteFriendShipGroupMember(HandleDeleteFriendShipGroupMemberReq req) {
         LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId())
-                .like(FriendShipGroupMemberEntity::getToId, req.getToId());
+        lambdaQueryWrapper.eq(FriendShipGroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(FriendShipGroupMemberEntity::getToId, req.getToId());
         int result;
         try {
             result = friendShipGroupMemberMapper.delete(lambdaQueryWrapper);
@@ -161,7 +183,7 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
     @Override
     public ResponseVO<GetAllFriendShipGroupMemberResp> getAllFriendShipGroupMember(GetAllFriendShipGroupMemberReq req) {
         LambdaQueryWrapper<FriendShipGroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
+        lambdaQueryWrapper.eq(FriendShipGroupMemberEntity::getGroupId, req.getGroupId());
         List<FriendShipGroupMemberEntity> friendShipGroupMemberEntities = friendShipGroupMemberMapper.selectList(lambdaQueryWrapper);
         if (friendShipGroupMemberEntities.size() == 0) {
             return ResponseVO.errorResponse(FriendShipErrorCode.NO_FRIENDS_IN_THE_GROUP);

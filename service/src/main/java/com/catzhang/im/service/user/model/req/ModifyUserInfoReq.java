@@ -31,7 +31,7 @@ public class ModifyUserInfoReq extends RequestBase {
     private String photo;
 
     // 性别
-    private String userSex;
+    private Integer userSex;
 
     // 个性签名
     private String selfSignature;

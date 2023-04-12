@@ -70,8 +70,8 @@ public class UserServiceImpl implements UserService {
         for (String userId :
                 req.getUserIds()) {
             LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            lambdaQueryWrapper.like(UserDataEntity::getUserId, userId)
-                    .like(UserDataEntity::getAppId, req.getAppId());
+            lambdaQueryWrapper.eq(UserDataEntity::getUserId, userId)
+                    .eq(UserDataEntity::getAppId, req.getAppId());
             int delete;
             try {
                 delete = userDataMapper.delete(lambdaQueryWrapper);
@@ -97,7 +97,7 @@ public class UserServiceImpl implements UserService {
     public ResponseVO<GetUserInfoResp> getUserInfo(GetUserInfoReq req) {
         LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.in(UserDataEntity::getUserId, req.getUserIds())
-                .like(UserDataEntity::getAppId, req.getAppId());
+                .eq(UserDataEntity::getAppId, req.getAppId());
 
         List<UserDataEntity> userDataEntities = userDataMapper.selectList(lambdaQueryWrapper);
         Map<String, UserDataEntity> userDataMap = new HashMap<>();
@@ -118,8 +118,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseVO<GetSingleUserInfoResp> getSingleUserInfo(GetSingleUserInfoReq req) {
         LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(UserDataEntity::getUserId, req.getUserId())
-                .like(UserDataEntity::getAppId, req.getAppId());
+        lambdaQueryWrapper.eq(UserDataEntity::getUserId, req.getUserId())
+                .eq(UserDataEntity::getAppId, req.getAppId());
 
         UserDataEntity userDataEntity = userDataMapper.selectOne(lambdaQueryWrapper);
 
@@ -137,8 +137,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public ResponseVO<ModifyUserInfoResp> modifyUserInfo(ModifyUserInfoReq req) {
         LambdaQueryWrapper<UserDataEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(UserDataEntity::getAppId, req.getAppId())
-                .like(UserDataEntity::getUserId, req.getUserId());
+        lambdaQueryWrapper.eq(UserDataEntity::getAppId, req.getAppId())
+                .eq(UserDataEntity::getUserId, req.getUserId());
 
         UserDataEntity userDataEntity = userDataMapper.selectOne(lambdaQueryWrapper);
         if (userDataEntity == null) {

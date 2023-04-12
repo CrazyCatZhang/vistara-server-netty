@@ -36,9 +36,9 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
     public ResponseVO<AddFriendShipRequestResp> addFriendShipRequest(AddFriendShipRequestReq req) {
         FriendDto toItem = req.getToItem();
         LambdaQueryWrapper<FriendShipRequestEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
-                .like(FriendShipRequestEntity::getFromId, req.getFromId())
-                .like(FriendShipRequestEntity::getToId, toItem.getToId());
+        lambdaQueryWrapper.eq(FriendShipRequestEntity::getAppId, req.getAppId())
+                .eq(FriendShipRequestEntity::getFromId, req.getFromId())
+                .eq(FriendShipRequestEntity::getToId, toItem.getToId());
         FriendShipRequestEntity friendShipRequest = friendShipRequestMapper.selectOne(lambdaQueryWrapper);
         if (friendShipRequest == null) {
             friendShipRequest = new FriendShipRequestEntity();
@@ -86,6 +86,11 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
         if (!req.getOperator().equals(friendShipRequestEntity.getToId())) {
             throw new ApplicationException(FriendShipErrorCode.NOT_APPROVER_OTHER_MAN_REQUEST);
         }
+
+        if (friendShipRequestEntity.getApproveStatus() == ApproveFriendRequestStatus.AGREE.getCode() || friendShipRequestEntity.getApproveStatus() == ApproveFriendRequestStatus.REJECT.getCode()) {
+            throw new ApplicationException(FriendShipErrorCode.FRIEND_REQUEST_APPROVED);
+        }
+
         friendShipRequestEntity.setApproveStatus(req.getStatus());
         friendShipRequestEntity.setUpdateTime(System.currentTimeMillis());
         int update = friendShipRequestMapper.updateById(friendShipRequestEntity);
@@ -113,8 +118,8 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
     @Override
     public ResponseVO<ReadFriendShipRequestResp> readFriendShipRequest(ReadFriendShipRequestReq req) {
         LambdaUpdateWrapper<FriendShipRequestEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
-                .like(FriendShipRequestEntity::getToId, req.getUserId())
+        lambdaUpdateWrapper.eq(FriendShipRequestEntity::getAppId, req.getAppId())
+                .eq(FriendShipRequestEntity::getToId, req.getUserId())
                 .set(FriendShipRequestEntity::getReadStatus, 1);
         friendShipRequestMapper.update(null, lambdaUpdateWrapper);
         GetFriendShipRequestReq getFriendShipRequestReq = new GetFriendShipRequestReq();
@@ -126,8 +131,8 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
     @Override
     public ResponseVO<GetFriendShipRequestResp> getFriendShipRequest(GetFriendShipRequestReq req) {
         LambdaQueryWrapper<FriendShipRequestEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipRequestEntity::getAppId, req.getAppId())
-                .like(FriendShipRequestEntity::getToId, req.getUserId());
+        lambdaQueryWrapper.eq(FriendShipRequestEntity::getAppId, req.getAppId())
+                .eq(FriendShipRequestEntity::getToId, req.getUserId());
         List<FriendShipRequestEntity> friendShipRequestEntities = friendShipRequestMapper.selectList(lambdaQueryWrapper);
         return ResponseVO.successResponse(new GetFriendShipRequestResp(friendShipRequestEntities));
     }

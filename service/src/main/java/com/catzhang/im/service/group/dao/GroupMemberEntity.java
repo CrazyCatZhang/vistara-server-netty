@@ -1,6 +1,5 @@
 package com.catzhang.im.service.group.dao;
 
-import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -27,6 +26,8 @@ public class GroupMemberEntity {
     private Integer role;
 
     private Long speakDate;
+
+    private int mute;
 
     //群昵称
     private String alias;

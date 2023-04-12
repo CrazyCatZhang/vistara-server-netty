@@ -60,23 +60,33 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId());
+        lambdaQueryWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId());
 
         if (groupMember.getRole() != null && groupMember.getRole() == GroupMemberRole.OWNER.getCode()) {
-            lambdaQueryWrapper.like(GroupMemberEntity::getRole, groupMember.getRole());
+            lambdaQueryWrapper.eq(GroupMemberEntity::getRole, groupMember.getRole());
             Integer integer = groupMemberMapper.selectCount(lambdaQueryWrapper);
             if (integer > 0) {
                 return ResponseVO.errorResponse(GroupErrorCode.GROUP_IS_HAVE_OWNER);
             }
         }
 
-        lambdaQueryWrapper.like(GroupMemberEntity::getMemberId, groupMember.getMemberId());
+        lambdaQueryWrapper.eq(GroupMemberEntity::getMemberId, groupMember.getMemberId());
         GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupId());
+        ResponseVO<GetGroupResp> group = groupService.getGroup(getGroupReq);
+        Integer mute = 0;
+        if (group.isOk()) {
+            mute = group.getData().getMute();
+        }
 
         if (groupMemberEntity == null) {
             groupMemberEntity = new GroupMemberEntity();
             BeanUtils.copyProperties(groupMember, groupMemberEntity);
+            groupMemberEntity.setMute(mute);
             groupMemberEntity.setGroupId(req.getGroupId());
             groupMemberEntity.setAppId(req.getAppId());
             groupMemberEntity.setJoinTime(System.currentTimeMillis());
@@ -87,6 +97,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
         } else if (GroupMemberRole.LEAVE.getCode() == groupMember.getRole()) {
             BeanUtils.copyProperties(groupMember, groupMemberEntity);
+            groupMemberEntity.setMute(mute);
             groupMemberEntity.setJoinTime(System.currentTimeMillis());
             int update = groupMemberMapper.update(groupMemberEntity, lambdaQueryWrapper);
             if (update == 1) {
@@ -103,11 +114,11 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         GetRoleInGroupResp getRoleInGroupResp = new GetRoleInGroupResp();
 
         LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getMemberId());
+        lambdaQueryWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getMemberId());
         GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
-        if (groupMemberEntity == null || groupMemberEntity.getRole() == GroupMemberRole.LEAVE.getCode()) {
+        if (groupMemberEntity == null || (groupMemberEntity.getRole() != null && groupMemberEntity.getRole() == GroupMemberRole.LEAVE.getCode())) {
             return ResponseVO.errorResponse(GroupErrorCode.MEMBER_IS_NOT_JOINED_GROUP);
         }
 
@@ -125,8 +136,8 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         if (req.getLimit() != null) {
             Page<GroupMemberEntity> resultPage = new Page<>(req.getOffset(), req.getLimit());
             LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                    .like(GroupMemberEntity::getMemberId, req.getMemberId());
+            lambdaQueryWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                    .eq(GroupMemberEntity::getMemberId, req.getMemberId());
             groupMemberMapper.selectPage(resultPage, lambdaQueryWrapper);
             HashSet<String> groupIds = new HashSet<>();
             List<GroupMemberEntity> records = resultPage.getRecords();
@@ -144,23 +155,23 @@ public class GroupMemberServiceImpl implements GroupMemberService {
     public ResponseVO<TransferGroupMemberResp> transferGroupMember(TransferGroupMemberReq req) {
 
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getRole, GroupMemberRole.OWNER.getCode())
+        lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getRole, GroupMemberRole.OWNER.getCode())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.ORDINARY.getCode());
         groupMemberMapper.update(null, lambdaUpdateWrapper);
 
         LambdaUpdateWrapper<GroupMemberEntity> newOwnerUpdateWrapper = new LambdaUpdateWrapper<>();
-        newOwnerUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getOwner())
+        newOwnerUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getOwner())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.OWNER.getCode());
         groupMemberMapper.update(null, newOwnerUpdateWrapper);
 
         LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getOwner());
+        lambdaQueryWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getOwner());
         GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
 
         return ResponseVO.successResponse(new TransferGroupMemberResp(groupMemberEntity));
@@ -335,9 +346,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         GetRoleInGroupResp data = roleInGroup.getData();
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getMemberId())
+        lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getMemberId())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
                 .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
@@ -372,9 +383,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getOperator())
+        lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getOperator())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
                 .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
@@ -426,7 +437,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                     return ResponseVO.errorResponse(GroupErrorCode.GROUP_OWNER_CAN_ONLY_TRANSFER);
                 }
 
-                if (group.getGroupType() == GroupType.PRIVATE.getCode() && (req.getRole() == GroupMemberRole.ADMINISTRATOR.getCode() || req.getRole() == GroupMemberRole.OWNER.getCode())) {
+                if (group.getGroupType() == GroupType.PRIVATE.getCode() && req.getRole() == GroupMemberRole.ADMINISTRATOR.getCode()) {
                     return ResponseVO.errorResponse(GroupErrorCode.THIS_OPERATE_NEED_APPMANAGER_ROLE);
                 }
 
@@ -461,9 +472,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getMemberId());
+        lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getMemberId());
 
         GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaUpdateWrapper);
 
@@ -498,6 +509,11 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         ResponseVO<GroupEntity> groupEntityResponseVO = groupService.handleGetGroup(getGroupReq);
         if (!groupEntityResponseVO.isOk()) {
             return ResponseVO.errorResponse(groupEntityResponseVO.getCode(), groupEntityResponseVO.getMsg());
+        }
+
+        GroupEntity data = groupEntityResponseVO.getData();
+        if (data.getGroupType() == GroupType.PRIVATE.getCode()) {
+            throw new ApplicationException(GroupErrorCode.PRIVATE_GROUPS_ARE_NOT_ALLOWED_TO_MUTE);
         }
 
         boolean isAdmin = false;
@@ -535,9 +551,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-        lambdaUpdateWrapper.like(GroupMemberEntity::getAppId, req.getAppId())
-                .like(GroupMemberEntity::getGroupId, req.getGroupId())
-                .like(GroupMemberEntity::getMemberId, req.getMemberId());
+        lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                .eq(GroupMemberEntity::getGroupId, req.getGroupId())
+                .eq(GroupMemberEntity::getMemberId, req.getMemberId());
         GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaUpdateWrapper);
 
         if (req.getSpeakDate() > 0) {

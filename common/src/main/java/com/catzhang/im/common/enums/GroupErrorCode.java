@@ -53,7 +53,11 @@ public enum GroupErrorCode implements ApplicationExceptionEnum {
 
     GROUP_OWNER_CAN_ONLY_TRANSFER(40021, "群主只能转让"),
 
-    MUTING_FAILED(40022, "禁言失败");
+    MUTING_FAILED(40022, "禁言失败"),
+
+    NOT_TRANSFERABLE_TO_ONESELF(40023, "不能转让给自己"),
+
+    PRIVATE_GROUPS_ARE_NOT_ALLOWED_TO_MUTE(40024, "私有群不允许禁言");
 
     private final int code;
     private final String error;

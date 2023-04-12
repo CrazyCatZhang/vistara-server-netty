@@ -39,9 +39,9 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
     @Transactional
     public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(AddFriendShipGroupReq req) {
         LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
-                .like(FriendShipGroupEntity::getGroupName, req.getGroupName())
-                .like(FriendShipGroupEntity::getFromId, req.getFromId());
+        lambdaQueryWrapper.eq(FriendShipGroupEntity::getAppId, req.getAppId())
+                .eq(FriendShipGroupEntity::getGroupName, req.getGroupName())
+                .eq(FriendShipGroupEntity::getFromId, req.getFromId());
 
         FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
         if (friendShipGroupEntity != null) {
@@ -99,9 +99,9 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
     @Override
     public ResponseVO<GetFriendShipGroupResp> getFriendShipGroup(GetFriendShipGroupReq req) {
         LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
-                .like(FriendShipGroupEntity::getFromId, req.getFromId())
-                .like(FriendShipGroupEntity::getGroupName, req.getGroupName());
+        lambdaQueryWrapper.eq(FriendShipGroupEntity::getAppId, req.getAppId())
+                .eq(FriendShipGroupEntity::getFromId, req.getFromId())
+                .eq(FriendShipGroupEntity::getGroupName, req.getGroupName());
         FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
         if (friendShipGroupEntity == null) {
             return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_NOT_EXIST);
@@ -120,9 +120,9 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         for (String groupName : req.getGroupNames()) {
             List<String> toIds = new ArrayList<>();
             LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-            lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
-                    .like(FriendShipGroupEntity::getGroupName, groupName)
-                    .like(FriendShipGroupEntity::getFromId, req.getFromId());
+            lambdaQueryWrapper.eq(FriendShipGroupEntity::getAppId, req.getAppId())
+                    .eq(FriendShipGroupEntity::getGroupName, groupName)
+                    .eq(FriendShipGroupEntity::getFromId, req.getFromId());
             FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
             if (friendShipGroupEntity != null) {
                 friendShipGroupEntity.setUpdateTime(System.currentTimeMillis());
@@ -156,8 +156,8 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         Map<String, List<String>> groups = new HashMap<>();
 
         LambdaQueryWrapper<FriendShipGroupEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-        lambdaQueryWrapper.like(FriendShipGroupEntity::getAppId, req.getAppId())
-                .like(FriendShipGroupEntity::getFromId, req.getFromId());
+        lambdaQueryWrapper.eq(FriendShipGroupEntity::getAppId, req.getAppId())
+                .eq(FriendShipGroupEntity::getFromId, req.getFromId());
         List<FriendShipGroupEntity> friendShipGroupEntities = friendShipGroupMapper.selectList(lambdaQueryWrapper);
         if (friendShipGroupEntities.size() == 0) {
             return ResponseVO.errorResponse(FriendShipErrorCode.YOU_HAVE_NOT_CREATED_GROUP);
@@ -169,7 +169,8 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             getAllFriendShipGroupMemberReq.setGroupId(item.getGroupId());
             ResponseVO<GetAllFriendShipGroupMemberResp> allFriendShipGroupMember = friendShipGroupMemberService.getAllFriendShipGroupMember(getAllFriendShipGroupMemberReq);
             if (!allFriendShipGroupMember.isOk()) {
-                return ResponseVO.errorResponse(allFriendShipGroupMember.getCode(), allFriendShipGroupMember.getMsg());
+                groups.put(item.getGroupName(), toIds);
+                continue;
             }
             List<FriendShipGroupMemberEntity> friendShipGroupMemberEntityList = allFriendShipGroupMember.getData().getFriendShipGroupMemberEntityList();
             friendShipGroupMemberEntityList.forEach(groupMember -> {

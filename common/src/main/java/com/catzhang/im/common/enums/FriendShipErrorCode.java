@@ -21,7 +21,7 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     TARGET_IS_BLACK_YOU(30007, "对方把你拉黑"),
 
-    REPEATSHIP_IS_NOT_EXIST(30008, "关系链记录不存在"),
+    RELATION_SHIP_IS_NOT_EXIST(30008, "关系链记录不存在"),
 
     ADD_BLACK_ERROR(30009, "添加黑名單失败"),
 
@@ -48,7 +48,10 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
     GROUP_DELETION_FAILED(30021, "分组删除失败"),
 
     NO_FRIENDS_IN_THE_GROUP(30022, "分组内没有好友"),
-    YOU_HAVE_NOT_CREATED_GROUP(30023, "你还没有创建分组");
+
+    YOU_HAVE_NOT_CREATED_GROUP(30023, "你还没有创建分组"),
+
+    FRIEND_REQUEST_APPROVED(30024, "好友申请已审批");
 
     private final int code;
     private final String error;
