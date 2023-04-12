@@ -1,6 +1,7 @@
 package com.catzhang.im.service.group.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.ApproveGroupRequestStatus;
@@ -11,11 +12,10 @@ import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.GroupRequestEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupRequestMapper;
 import com.catzhang.im.service.group.model.req.*;
-import com.catzhang.im.service.group.model.resp.AddGroupMemberResp;
-import com.catzhang.im.service.group.model.resp.AddGroupRequestResp;
-import com.catzhang.im.service.group.model.resp.ApproveGroupRequestResp;
+import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import com.catzhang.im.service.group.service.GroupRequestService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -127,5 +127,35 @@ public class GroupRequestServiceImpl implements GroupRequestService {
         }
 
         return ResponseVO.successResponse(new ApproveGroupRequestResp(groupRequestEntity, null));
+    }
+
+    @Override
+    public ResponseVO<ReadGroupRequestResp> readGroupRequest(ReadGroupRequestReq req) {
+        LambdaUpdateWrapper<GroupRequestEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.eq(GroupRequestEntity::getAppId, req.getAppId())
+                .eq(GroupRequestEntity::getToGroupId, req.getGroupId())
+                .set(GroupRequestEntity::getReadStatus, 1);
+
+        groupRequestMapper.update(null, lambdaUpdateWrapper);
+
+        GetGroupRequestReq getGroupRequestReq = new GetGroupRequestReq();
+        BeanUtils.copyProperties(req, getGroupRequestReq);
+        ResponseVO<GetGroupRequestResp> groupRequest = this.getGroupRequest(getGroupRequestReq);
+        if (!groupRequest.isOk()) {
+            return ResponseVO.errorResponse(groupRequest.getCode(), groupRequest.getMsg());
+        }
+        return ResponseVO.successResponse(new ReadGroupRequestResp(groupRequest.getData().getGroupRequestEntityList()));
+    }
+
+    @Override
+    public ResponseVO<GetGroupRequestResp> getGroupRequest(GetGroupRequestReq req) {
+        LambdaQueryWrapper<GroupRequestEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(GroupRequestEntity::getAppId, req.getAppId())
+                .eq(GroupRequestEntity::getToGroupId, req.getGroupId());
+        List<GroupRequestEntity> groupRequestEntities = groupRequestMapper.selectList(lambdaQueryWrapper);
+        if (groupRequestEntities.size() == 0) {
+            return ResponseVO.errorResponse(GroupErrorCode.ADD_GROUP_APPLICATION_IS_NOT_EXIST);
+        }
+        return ResponseVO.successResponse(new GetGroupRequestResp(groupRequestEntities));
     }
 }

@@ -125,6 +125,9 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
         GetFriendShipRequestReq getFriendShipRequestReq = new GetFriendShipRequestReq();
         BeanUtils.copyProperties(req, getFriendShipRequestReq);
         ResponseVO<GetFriendShipRequestResp> friendShipRequest = this.getFriendShipRequest(getFriendShipRequestReq);
+        if (!friendShipRequest.isOk()) {
+            return ResponseVO.errorResponse(friendShipRequest.getCode(), friendShipRequest.getMsg());
+        }
         return ResponseVO.successResponse(new ReadFriendShipRequestResp(friendShipRequest.getData().getFriendShipRequestEntityList()));
     }
 
@@ -134,6 +137,9 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
         lambdaQueryWrapper.eq(FriendShipRequestEntity::getAppId, req.getAppId())
                 .eq(FriendShipRequestEntity::getToId, req.getUserId());
         List<FriendShipRequestEntity> friendShipRequestEntities = friendShipRequestMapper.selectList(lambdaQueryWrapper);
+        if (friendShipRequestEntities.size() == 0) {
+            return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_REQUEST_IS_NOT_EXIST);
+        }
         return ResponseVO.successResponse(new GetFriendShipRequestResp(friendShipRequestEntities));
     }
 }
