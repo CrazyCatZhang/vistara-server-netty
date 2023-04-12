@@ -57,4 +57,9 @@ public class GroupController {
     public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req) {
         return groupService.getJoinedGroup(req);
     }
+
+    @PostMapping("add")
+    public ResponseVO<AddGroupResp> addGroup(@RequestBody @Validated AddGroupReq req) {
+        return groupService.addGroup(req);
+    }
 }

@@ -59,7 +59,11 @@ public enum GroupErrorCode implements ApplicationExceptionEnum {
 
     PRIVATE_GROUPS_ARE_NOT_ALLOWED_TO_MUTE(40024, "私有群不允许禁言"),
 
-    GROUP_REQUEST_IS_FAILED(40025, "加群申请失败");
+    GROUP_REQUEST_IS_FAILED(40025, "加群申请失败"),
+
+    PRIVATE_GROUPS_ARE_INVITE_ONLY(40026, "私有群只能邀请加入"),
+
+    NO_ONE_IS_ALLOWED_IN_THIS_GROUP(40027, "该群禁止任何人加入");
 
     private final int code;
     private final String error;

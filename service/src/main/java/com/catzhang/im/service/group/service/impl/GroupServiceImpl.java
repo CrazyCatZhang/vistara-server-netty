@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.common.ResponseVO;
-import com.catzhang.im.common.enums.GroupErrorCode;
-import com.catzhang.im.common.enums.GroupMemberRole;
-import com.catzhang.im.common.enums.GroupStatus;
-import com.catzhang.im.common.enums.GroupType;
+import com.catzhang.im.common.enums.*;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
@@ -16,6 +13,7 @@ import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
+import com.catzhang.im.service.group.service.GroupRequestService;
 import com.catzhang.im.service.group.service.GroupService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
@@ -45,6 +43,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    GroupRequestService groupRequestService;
 
     @Override
     public ResponseVO importGroup(ImportGroupReq req) {
@@ -424,5 +425,64 @@ public class GroupServiceImpl implements GroupService {
         groupMemberMapper.update(null, groupMemberEntityLambdaUpdateWrapper);
 
         return ResponseVO.successResponse(new MuteGroupResp(data));
+    }
+
+    @Override
+    public ResponseVO<AddGroupResp> addGroup(AddGroupReq req) {
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        getGroupReq.setAppId(req.getAppId());
+        getGroupReq.setGroupId(req.getGroupItem().getToGroupId());
+        ResponseVO<GetGroupResp> group = this.getGroup(getGroupReq);
+        if (!group.isOk()) {
+            return ResponseVO.errorResponse(group.getCode(), group.getMsg());
+        }
+
+        GetGroupResp groupData = group.getData();
+
+        if (groupData.getGroupType() == GroupType.PRIVATE.getCode()) {
+            return ResponseVO.errorResponse(GroupErrorCode.PRIVATE_GROUPS_ARE_INVITE_ONLY);
+        }
+
+        if (groupData.getApplyJoinType() != null) {
+            if (groupData.getApplyJoinType() == AllowGroupType.NOT_NEED_APPROVAL.getCode()) {
+                AddGroupMemberReq addGroupMemberReq = new AddGroupMemberReq();
+                addGroupMemberReq.setAppId(req.getAppId());
+                addGroupMemberReq.setGroupId(groupData.getGroupId());
+                GroupMemberDto groupMemberDto = new GroupMemberDto();
+                groupMemberDto.setRole(GroupMemberRole.ORDINARY.getCode());
+                groupMemberDto.setMemberId(req.getFromId());
+                addGroupMemberReq.setGroupMember(groupMemberDto);
+                ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = groupMemberService.addGroupMember(addGroupMemberReq);
+                if (!addGroupMemberRespResponseVO.isOk()) {
+                    return ResponseVO.errorResponse(addGroupMemberRespResponseVO.getCode(), addGroupMemberRespResponseVO.getMsg());
+                }
+                GroupMemberEntity groupMemberEntity = addGroupMemberRespResponseVO.getData().getGroupMemberEntity();
+                return ResponseVO.successResponse(new AddGroupMemberResp(groupMemberEntity));
+            } else if (groupData.getApplyJoinType() == AllowGroupType.NEED_APPROVAL.getCode()) {
+                LambdaQueryWrapper<GroupMemberEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+                lambdaQueryWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
+                        .eq(GroupMemberEntity::getGroupId, groupData.getGroupId())
+                        .eq(GroupMemberEntity::getMemberId, req.getFromId());
+
+                GroupMemberEntity groupMemberEntity = groupMemberMapper.selectOne(lambdaQueryWrapper);
+                if (groupMemberEntity == null || groupMemberEntity.getRole() == GroupMemberRole.LEAVE.getCode()) {
+                    AddGroupRequestReq addGroupRequestReq = new AddGroupRequestReq();
+                    addGroupRequestReq.setGroupItem(req.getGroupItem());
+                    addGroupRequestReq.setFromId(req.getFromId());
+                    addGroupRequestReq.setAppId(req.getAppId());
+                    ResponseVO<AddGroupRequestResp> addGroupRequestRespResponseVO = groupRequestService.addGroupRequest(addGroupRequestReq);
+                    if (!addGroupRequestRespResponseVO.isOk()) {
+                        return ResponseVO.errorResponse(addGroupRequestRespResponseVO.getCode(), addGroupRequestRespResponseVO.getMsg());
+                    }
+                    return ResponseVO.successResponse(addGroupRequestRespResponseVO.getData());
+                } else {
+                    return ResponseVO.errorResponse(GroupErrorCode.USER_IS_JOINED_GROUP);
+                }
+            } else {
+                return ResponseVO.errorResponse(GroupErrorCode.NO_ONE_IS_ALLOWED_IN_THIS_GROUP);
+            }
+        }
+        return null;
     }
 }
