@@ -63,7 +63,11 @@ public enum GroupErrorCode implements ApplicationExceptionEnum {
 
     PRIVATE_GROUPS_ARE_INVITE_ONLY(40026, "私有群只能邀请加入"),
 
-    NO_ONE_IS_ALLOWED_IN_THIS_GROUP(40027, "该群禁止任何人加入");
+    NO_ONE_IS_ALLOWED_IN_THIS_GROUP(40027, "该群禁止任何人加入"),
+
+    ADD_GROUP_APPLICATION_IS_NOT_EXIST(40028, "加群申请不存在"),
+
+    GROUP_REQUEST_APPROVED(40029, "加群申请已审批");
 
     private final int code;
     private final String error;
