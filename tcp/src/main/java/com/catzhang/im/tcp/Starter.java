@@ -1,6 +1,7 @@
 package com.catzhang.im.tcp;
 
 import com.catzhang.im.codec.config.BootstrapConfig;
+import com.catzhang.im.tcp.redis.RedisManager;
 import com.catzhang.im.tcp.server.TcpServer;
 import com.catzhang.im.tcp.server.WebSocketServer;
 import org.yaml.snakeyaml.Yaml;
@@ -24,7 +25,8 @@ public class Starter {
             Yaml yaml = new Yaml();
             FileInputStream fileInputStream = new FileInputStream(path);
             BootstrapConfig bootstrapConfig = yaml.loadAs(fileInputStream, BootstrapConfig.class);
-            System.out.println(bootstrapConfig);
+
+            RedisManager.init(bootstrapConfig.getLim().getRedis());
 
             new TcpServer(bootstrapConfig.getLim()).start();
             new WebSocketServer(bootstrapConfig.getLim()).start();
