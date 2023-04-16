@@ -1,5 +1,6 @@
 package com.catzhang.im.tcp.server;
 
+import com.catzhang.im.codec.config.BootstrapConfig;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -20,11 +21,12 @@ public class TcpServer {
     EventLoopGroup bossGroup;
     EventLoopGroup workerGroup;
     ServerBootstrap server;
-    private int port;
+    BootstrapConfig.TcpConfig tcpConfig;
 
-    public TcpServer(int port) {
-        bossGroup = new NioEventLoopGroup();
-        workerGroup = new NioEventLoopGroup();
+    public TcpServer(BootstrapConfig.TcpConfig tcpConfig) {
+        this.tcpConfig = tcpConfig;
+        bossGroup = new NioEventLoopGroup(tcpConfig.getBossThreadSize());
+        workerGroup = new NioEventLoopGroup(tcpConfig.getWorkThreadSize());
         server = new ServerBootstrap();
         server.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
@@ -38,7 +40,9 @@ public class TcpServer {
 
                     }
                 });
+    }
 
-        server.bind(port);
+    public void start() {
+        this.server.bind(this.tcpConfig.getTcpPort());
     }
 }
