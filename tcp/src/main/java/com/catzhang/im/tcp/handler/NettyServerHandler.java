@@ -28,12 +28,18 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message message) throws Exception {
 
+        System.out.println(channelHandlerContext.channel());
+
         Integer command = message.getMessageHeader().getCommand();
         if (command == SystemCommand.LOGIN.getCommand()) {
             LoginPack loginPack = JSON.parseObject(JSON.toJSONString(message.getMessagePack()), new TypeReference<LoginPack>() {
             }.getType());
-            logger.info(loginPack.toString());
-            channelHandlerContext.channel().attr(AttributeKey.valueOf("userId")).set(loginPack.getUserId());
+
+
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.USERID)).set(loginPack.getUserId());
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.APPID)).set(message.getMessageHeader().getAppId());
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).set(message.getMessageHeader().getClientType());
+
 
             UserSession userSession = new UserSession();
             userSession.setAppId(message.getMessageHeader().getAppId());
@@ -45,7 +51,17 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             RMap<String, String> map = redissonClient.getMap(message.getMessageHeader().getAppId() + Constants.RedisConstants.USER_SESSION_CONSTANTS + loginPack.getUserId());
             map.put(String.valueOf(message.getMessageHeader().getClientType()), JSON.toJSONString(userSession));
 
-            SessionSocketHolder.put(loginPack.getUserId(), (NioSocketChannel) channelHandlerContext.channel());
+            SessionSocketHolder.put(message.getMessageHeader().getAppId(), loginPack.getUserId(), message.getMessageHeader().getClientType(), (NioSocketChannel) channelHandlerContext.channel());
+        } else if (command == SystemCommand.LOGOUT.getCommand()) {
+            String userId = (String) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.USERID)).get();
+            Integer appId = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.APPID)).get();
+            Integer clientType = (Integer) channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).get();
+            SessionSocketHolder.remove(appId, userId, clientType);
+
+            RedissonClient redissonClient = RedisManager.getRedissonClient();
+            RMap<String, String> map = redissonClient.getMap(appId + Constants.RedisConstants.USER_SESSION_CONSTANTS + userId);
+            map.remove(String.valueOf(clientType));
+            channelHandlerContext.channel().close();
         }
 
     }
