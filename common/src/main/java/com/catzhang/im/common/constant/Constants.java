@@ -13,6 +13,8 @@ public class Constants {
 
     public static final String CLIENTTYPE = "clientType";
 
+    public static final String READTIME = "readTime";
+
     public static class RedisConstants{
 
         public static final String USER_SESSION_CONSTANTS = ":userSession:";
