@@ -1,9 +1,11 @@
 package com.catzhang.im.tcp;
 
 import com.catzhang.im.codec.config.BootstrapConfig;
+import com.catzhang.im.tcp.consume.MessageConsumer;
 import com.catzhang.im.tcp.redis.RedisManager;
 import com.catzhang.im.tcp.server.TcpServer;
 import com.catzhang.im.tcp.server.WebSocketServer;
+import com.catzhang.im.tcp.utils.MqFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.FileInputStream;
@@ -27,6 +29,8 @@ public class Starter {
             BootstrapConfig bootstrapConfig = yaml.loadAs(fileInputStream, BootstrapConfig.class);
 
             RedisManager.init(bootstrapConfig.getLim().getRedis());
+            MqFactory.init(bootstrapConfig.getLim().getRabbitmq());
+            MessageConsumer.init();
 
             new TcpServer(bootstrapConfig.getLim()).start();
             new WebSocketServer(bootstrapConfig.getLim()).start();
