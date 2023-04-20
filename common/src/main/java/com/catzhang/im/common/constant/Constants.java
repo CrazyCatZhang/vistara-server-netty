@@ -19,6 +19,12 @@ public class Constants {
 
     public static final String READTIME = "readTime";
 
+    public static final String IMCOREZKROOT = "/im-coreRoot";
+
+    public static final String IMCOREZKROOTTCP = "/tcp";
+
+    public static final String IMCOREZKROOTWEBSOCKET = "/webSocket";
+
     public static class RedisConstants {
 
         public static final String USER_SESSION_CONSTANTS = ":userSession:";
