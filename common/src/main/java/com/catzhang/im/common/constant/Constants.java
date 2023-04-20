@@ -17,6 +17,8 @@ public class Constants {
 
     public static final String CLIENTTYPE = "clientType";
 
+    public static final String IMEI = "imei";
+
     public static final String READTIME = "readTime";
 
     public static final String IMCOREZKROOT = "/im-coreRoot";

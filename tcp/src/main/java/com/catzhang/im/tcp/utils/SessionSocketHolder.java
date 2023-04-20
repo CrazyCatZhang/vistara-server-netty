@@ -22,24 +22,27 @@ public class SessionSocketHolder {
 
     private static final Map<UserClientDto, NioSocketChannel> CHANNELS = new ConcurrentHashMap<>();
 
-    public static void put(Integer appId, String userId, Integer clientType, NioSocketChannel channel) {
+    public static void put(Integer appId, String userId, Integer clientType, String imei, NioSocketChannel channel) {
         UserClientDto userClientDto = new UserClientDto();
+        userClientDto.setImei(imei);
         userClientDto.setAppId(appId);
         userClientDto.setUserId(userId);
         userClientDto.setClientType(clientType);
         CHANNELS.put(userClientDto, channel);
     }
 
-    public static NioSocketChannel get(Integer appId, String userId, Integer clientType) {
+    public static NioSocketChannel get(Integer appId, String userId, Integer clientType, String imei) {
         UserClientDto userClientDto = new UserClientDto();
+        userClientDto.setImei(imei);
         userClientDto.setAppId(appId);
         userClientDto.setClientType(clientType);
         userClientDto.setUserId(userId);
         return CHANNELS.get(userClientDto);
     }
 
-    public static void remove(Integer appId, String userId, Integer clientType) {
+    public static void remove(Integer appId, String userId, Integer clientType, String imei) {
         UserClientDto userClientDto = new UserClientDto();
+        userClientDto.setImei(imei);
         userClientDto.setAppId(appId);
         userClientDto.setClientType(clientType);
         userClientDto.setUserId(userId);
@@ -54,11 +57,13 @@ public class SessionSocketHolder {
         String userId = (String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.USERID)).get();
         Integer appId = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.APPID)).get();
         Integer clientType = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).get();
-        SessionSocketHolder.remove(appId, userId, clientType);
+        String imei = (String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.IMEI)).get();
+
+        SessionSocketHolder.remove(appId, userId, clientType, imei);
 
         RedissonClient redissonClient = RedisManager.getRedissonClient();
         RMap<String, String> map = redissonClient.getMap(appId + Constants.RedisConstants.USER_SESSION_CONSTANTS + userId);
-        map.remove(String.valueOf(clientType));
+        map.remove(clientType + ":" + imei);
         nioSocketChannel.close();
     }
 
@@ -66,7 +71,9 @@ public class SessionSocketHolder {
         String userId = (String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.USERID)).get();
         Integer appId = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.APPID)).get();
         Integer clientType = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).get();
-        SessionSocketHolder.remove(appId, userId, clientType);
+        String imei = (String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.IMEI)).get();
+
+        SessionSocketHolder.remove(appId, userId, clientType, imei);
 
         RedissonClient redissonClient = RedisManager.getRedissonClient();
         RMap<String, String> map = redissonClient.getMap(appId + Constants.RedisConstants.USER_SESSION_CONSTANTS + userId);
@@ -74,7 +81,7 @@ public class SessionSocketHolder {
         if (!StringUtils.isBlank(session)) {
             UserSession userSession = JSON.parseObject(session, UserSession.class);
             userSession.setConnectState(ImConnectStatus.OFFLINE_STATUS.getCode());
-            map.put(clientType.toString(), JSON.toJSONString(userSession));
+            map.put(clientType + ":" + imei, JSON.toJSONString(userSession));
         }
 
         nioSocketChannel.close();

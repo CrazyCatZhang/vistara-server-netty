@@ -43,6 +43,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.USERID)).set(loginPack.getUserId());
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.APPID)).set(message.getMessageHeader().getAppId());
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).set(message.getMessageHeader().getClientType());
+            channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.IMEI)).set(message.getMessageHeader().getImei());
 
 
             UserSession userSession = new UserSession();
@@ -60,9 +61,9 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
 
             RedissonClient redissonClient = RedisManager.getRedissonClient();
             RMap<String, String> map = redissonClient.getMap(message.getMessageHeader().getAppId() + Constants.RedisConstants.USER_SESSION_CONSTANTS + loginPack.getUserId());
-            map.put(String.valueOf(message.getMessageHeader().getClientType()), JSON.toJSONString(userSession));
+            map.put(message.getMessageHeader().getClientType() + ":" + message.getMessageHeader().getImei(), JSON.toJSONString(userSession));
 
-            SessionSocketHolder.put(message.getMessageHeader().getAppId(), loginPack.getUserId(), message.getMessageHeader().getClientType(), (NioSocketChannel) channelHandlerContext.channel());
+            SessionSocketHolder.put(message.getMessageHeader().getAppId(), loginPack.getUserId(), message.getMessageHeader().getClientType(), message.getMessageHeader().getImei(), (NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.LOGOUT.getCommand()) {
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
