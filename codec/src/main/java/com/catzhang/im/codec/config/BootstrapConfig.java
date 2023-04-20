@@ -26,6 +26,8 @@ public class BootstrapConfig {
 
         private Long heartbeatTimeout; // 心跳超时时间
 
+        private Integer loginModel; //登录模式
+
         /**
          * redis配置
          */

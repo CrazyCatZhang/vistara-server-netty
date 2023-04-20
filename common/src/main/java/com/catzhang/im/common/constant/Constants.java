@@ -29,6 +29,12 @@ public class Constants {
 
     public static class RedisConstants {
 
+        /**
+         * 用户上线通知channel
+         */
+        public static final String USERLOGINCHANNEL
+                = "signal/channel/LOGIN_USER_INNER_QUEUE";
+
         public static final String USER_SESSION_CONSTANTS = ":userSession:";
 
     }

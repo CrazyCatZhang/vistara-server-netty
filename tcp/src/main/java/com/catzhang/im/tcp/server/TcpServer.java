@@ -1,6 +1,7 @@
 package com.catzhang.im.tcp.server;
 
 import com.catzhang.im.codec.MessageDecoder;
+import com.catzhang.im.codec.MessageEncoder;
 import com.catzhang.im.codec.config.BootstrapConfig;
 import com.catzhang.im.tcp.handler.HeartBeatHandler;
 import com.catzhang.im.tcp.handler.NettyServerHandler;
@@ -42,7 +43,8 @@ public class TcpServer {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline().addLast(new MessageDecoder());
-                        socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 1));
+                        socketChannel.pipeline().addLast(new MessageEncoder());
+//                        socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 1));
                         socketChannel.pipeline().addLast(new HeartBeatHandler(tcpConfig.getHeartbeatTimeout()));
                         socketChannel.pipeline().addLast(new NettyServerHandler(tcpConfig.getBrokerId()));
                     }

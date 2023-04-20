@@ -33,7 +33,7 @@ public class Starter {
             FileInputStream fileInputStream = new FileInputStream(path);
             BootstrapConfig bootstrapConfig = yaml.loadAs(fileInputStream, BootstrapConfig.class);
 
-            RedisManager.init(bootstrapConfig.getLim().getRedis());
+            RedisManager.init(bootstrapConfig);
             MqFactory.init(bootstrapConfig.getLim().getRabbitmq());
             MessageConsumer.init(bootstrapConfig.getLim().getBrokerId());
             registryZK(bootstrapConfig);
