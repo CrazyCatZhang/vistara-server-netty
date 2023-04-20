@@ -44,7 +44,7 @@ public class TcpServer {
                         socketChannel.pipeline().addLast(new MessageDecoder());
                         socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 1));
                         socketChannel.pipeline().addLast(new HeartBeatHandler(tcpConfig.getHeartbeatTimeout()));
-                        socketChannel.pipeline().addLast(new NettyServerHandler());
+                        socketChannel.pipeline().addLast(new NettyServerHandler(tcpConfig.getBrokerId()));
                     }
                 });
     }

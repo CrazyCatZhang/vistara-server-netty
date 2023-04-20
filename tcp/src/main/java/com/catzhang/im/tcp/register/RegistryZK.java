@@ -16,7 +16,6 @@ public class RegistryZK implements Runnable {
 
     private static Logger logger = LoggerFactory.getLogger(RegistryZK.class);
 
-
     private ZKit zkit;
 
     private String ip;

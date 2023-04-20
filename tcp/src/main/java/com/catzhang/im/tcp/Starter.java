@@ -35,7 +35,7 @@ public class Starter {
 
             RedisManager.init(bootstrapConfig.getLim().getRedis());
             MqFactory.init(bootstrapConfig.getLim().getRabbitmq());
-            MessageConsumer.init();
+            MessageConsumer.init(bootstrapConfig.getLim().getBrokerId());
             registryZK(bootstrapConfig);
 
             new TcpServer(bootstrapConfig.getLim()).start();

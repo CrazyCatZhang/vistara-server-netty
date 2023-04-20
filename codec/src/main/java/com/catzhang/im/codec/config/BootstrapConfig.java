@@ -41,6 +41,11 @@ public class BootstrapConfig {
          */
         private ZkConfig zkConfig;
 
+        /**
+         * brokerId
+         */
+        private Integer brokerId;
+
     }
 
     @Data
