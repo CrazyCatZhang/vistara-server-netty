@@ -2,6 +2,7 @@ package com.catzhang.im.common.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 import org.springframework.stereotype.Component;
 
 
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "appconfig")
 public class AppConfig {
+
+    /** appId */
+    private Integer appId;
 
     private String privateKey;
 
@@ -31,7 +35,19 @@ public class AppConfig {
     /** 如果选用一致性hash的话具体hash算法*/
     private Integer consistentHashWay;
 
-    private String callbackUrl;
+    private Integer tcpPort; //tcp 端口
+
+    private Integer webSocketPort; //webSocket端口
+
+    private boolean needWebSocket; //是否需要开启WebSocket
+
+    private Integer loginModel; //登录模式
+
+    private Integer messageRecallTimeOut; //消息可撤回时间
+
+    private Integer groupMaxMemberCount; // 群组最大成员数量
+
+    private String callbackUrl; //应用服务回调地址
 
     private boolean modifyUserAfterCallback; //用户资料变更之后回调开关
 
@@ -63,8 +79,12 @@ public class AppConfig {
 
     private boolean sendMessageBeforeCallback;//发送单聊消息之前
 
-    private Integer deleteConversationSyncMode;
+    private Integer deleteConversationSyncMode; //多端同步
 
     private Integer offlineMessageCount;//离线消息最大条数
+
+    private boolean sendGroupMessageAfterCallback; //发送群聊消息之后
+
+    private boolean sendGroupMessageBeforeCallback; // 发送群里消息之前
 
 }

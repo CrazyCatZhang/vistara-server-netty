@@ -31,7 +31,7 @@ public class BeanConfig {
     public RouteHandle routeHandle() throws Exception {
 
         Integer imRouteWay = appConfig.getImRouteWay();
-        String routeWay = "";
+        String routeWay;
 
         ImUrlRouteWay handler = ImUrlRouteWay.getHandler(imRouteWay);
         assert handler != null;
@@ -42,9 +42,10 @@ public class BeanConfig {
 
             Method setHash = Class.forName(routeWay).getMethod("setHash", AbstractConsistentHash.class);
             Integer consistentHashWay = appConfig.getConsistentHashWay();
-            String hashWay = "";
+            String hashWay;
 
             RouteHashMethod hashHandler = RouteHashMethod.getHandler(consistentHashWay);
+            assert hashHandler != null;
             hashWay = hashHandler.getClazz();
             AbstractConsistentHash consistentHash
                     = (AbstractConsistentHash) Class.forName(hashWay).newInstance();
