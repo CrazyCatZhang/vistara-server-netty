@@ -6,15 +6,18 @@ import com.rabbitmq.client.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 /**
  * @author crazycatzhang
  */
-@Slf4j
 @AllArgsConstructor
 public class MessageConsumer {
+
+    private static Logger logger = LoggerFactory.getLogger(MessageConsumer.class);
 
     private static String brokerId;
 
@@ -28,7 +31,7 @@ public class MessageConsumer {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
                     String s = new String(body);
-                    log.info(s);
+                    logger.info(s);
                 }
             });
         } catch (Exception e) {

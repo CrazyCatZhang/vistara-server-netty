@@ -28,7 +28,6 @@ public class ZKit {
      */
     public List<String> getAllTcpNode() {
         List<String> children = zkClient.getChildren(Constants.IMCOREZKROOT + Constants.IMCOREZKROOTTCP);
-//        logger.info("Query all node =[{}] success.", JSON.toJSONString(children));
         return children;
     }
 
@@ -39,7 +38,6 @@ public class ZKit {
      */
     public List<String> getAllWebNode() {
         List<String> children = zkClient.getChildren(Constants.IMCOREZKROOT + Constants.IMCOREZKROOTWEBSOCKET);
-//        logger.info("Query all node =[{}] success.", JSON.toJSONString(children));
         return children;
     }
 }
