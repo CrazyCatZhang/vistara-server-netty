@@ -12,6 +12,7 @@ import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
+import com.catzhang.im.service.friendship.model.callback.AddFriendBlackAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.callback.DeleteFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.callback.UpdateFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.req.*;
@@ -530,6 +531,17 @@ public class FriendShipServiceImpl implements FriendShipService {
 
         AddFriendShipBlackResp addFriendShipBlackResp = new AddFriendShipBlackResp();
         addFriendShipBlackResp.setBlackShipEntity(fromItem);
+
+        //TODO: 添加黑名单之后回调
+        if (appConfig.isAddFriendShipBlackAfterCallback()) {
+            AddFriendBlackAfterCallbackDto callbackDto = new AddFriendBlackAfterCallbackDto();
+            callbackDto.setFromId(req.getFromId());
+            callbackDto.setToId(req.getToId());
+            callbackService.afterCallback(req.getAppId(),
+                    Constants.CallbackCommand.ADDBLACKAFTER, JSONObject
+                            .toJSONString(callbackDto));
+        }
+
         return ResponseVO.successResponse(addFriendShipBlackResp);
     }
 
