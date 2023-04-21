@@ -12,6 +12,7 @@ import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
+import com.catzhang.im.service.friendship.model.callback.UpdateFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
@@ -324,6 +325,17 @@ public class FriendShipServiceImpl implements FriendShipService {
             FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
             HandleUpdateFriendShipResp handleUpdateFriendShipResp = new HandleUpdateFriendShipResp();
             handleUpdateFriendShipResp.setFriendShipEntity(friendShipEntity);
+
+            //TODO: 更新好友信息之后回调
+            if (appConfig.isModifyFriendAfterCallback()) {
+                UpdateFriendAfterCallbackDto callbackDto = new UpdateFriendAfterCallbackDto();
+                callbackDto.setFromId(req.getFromId());
+                callbackDto.setToItem(req.getToItem());
+                callbackService.afterCallback(req.getAppId(),
+                        Constants.CallbackCommand.UPDATEFRIENDAFTER, JSONObject
+                                .toJSONString(callbackDto));
+            }
+
             return ResponseVO.successResponse(handleUpdateFriendShipResp);
         }
 
