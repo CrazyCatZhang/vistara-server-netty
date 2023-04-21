@@ -11,10 +11,7 @@ import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
-import com.catzhang.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
-import com.catzhang.im.service.friendship.model.callback.AddFriendBlackAfterCallbackDto;
-import com.catzhang.im.service.friendship.model.callback.DeleteFriendAfterCallbackDto;
-import com.catzhang.im.service.friendship.model.callback.UpdateFriendAfterCallbackDto;
+import com.catzhang.im.service.friendship.model.callback.*;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
@@ -565,6 +562,17 @@ public class FriendShipServiceImpl implements FriendShipService {
         if (update != 1) {
             return ResponseVO.errorResponse();
         }
+
+        //TODO: 删除黑名单之后回调
+        if (appConfig.isDeleteFriendShipBlackAfterCallback()) {
+            DeleteFriendBlackAfterCallbackDto callbackDto = new DeleteFriendBlackAfterCallbackDto();
+            callbackDto.setFromId(req.getFromId());
+            callbackDto.setToId(req.getToId());
+            callbackService.afterCallback(req.getAppId(),
+                    Constants.CallbackCommand.DELETEBLACK, JSONObject
+                            .toJSONString(callbackDto));
+        }
+
         return ResponseVO.successResponse(new DeleteFriendShipBlackResp(fromItem));
     }
 
