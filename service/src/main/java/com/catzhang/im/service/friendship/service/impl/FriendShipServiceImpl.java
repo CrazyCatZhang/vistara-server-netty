@@ -12,6 +12,7 @@ import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
+import com.catzhang.im.service.friendship.model.callback.DeleteFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.callback.UpdateFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
@@ -355,6 +356,17 @@ public class FriendShipServiceImpl implements FriendShipService {
             if (friendShipEntity.getStatus() != null && friendShipEntity.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
                 friendShipEntity.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
                 friendShipMapper.update(friendShipEntity, lambdaQueryWrapper);
+
+                //TODO: 删除好友之后回调
+                if (appConfig.isAddFriendAfterCallback()) {
+                    DeleteFriendAfterCallbackDto callbackDto = new DeleteFriendAfterCallbackDto();
+                    callbackDto.setFromId(req.getFromId());
+                    callbackDto.setToId(req.getToId());
+                    callbackService.afterCallback(req.getAppId(),
+                            Constants.CallbackCommand.DELETEFRIENDAFTER, JSONObject
+                                    .toJSONString(callbackDto));
+                }
+
             } else {
                 return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_IS_DELETED);
             }
