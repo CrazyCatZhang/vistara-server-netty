@@ -1,13 +1,17 @@
 package com.catzhang.im.service.friendship.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.config.AppConfig;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.*;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
+import com.catzhang.im.service.friendship.model.callback.AddFriendAfterCallbackDto;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
@@ -18,6 +22,7 @@ import com.catzhang.im.service.user.model.req.GetUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.utils.CallbackService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +50,12 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Autowired
     FriendShipRequestService friendShipRequestService;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    CallbackService callbackService;
 
     @Override
     public ResponseVO<ImportFriendShipResp> importFriendShip(ImportFriendShipReq req) {
@@ -117,6 +128,18 @@ public class FriendShipServiceImpl implements FriendShipService {
         if (!toUserInfo.isOk()) {
             return ResponseVO.errorResponse(toUserInfo.getCode(), toUserInfo.getMsg());
         }
+
+        //TODO: 添加好友之前回调
+        if (appConfig.isAddFriendBeforeCallback()) {
+            ResponseVO callbackResp = callbackService
+                    .beforeCallback(req.getAppId(),
+                            Constants.CallbackCommand.ADDFRIENDBEFORE
+                            , JSONObject.toJSONString(req));
+            if (!callbackResp.isOk()) {
+                return callbackResp;
+            }
+        }
+
 
         UserDataEntity userDataEntity = toUserInfo.getData().getUserDataEntity();
         if (userDataEntity.getFriendAllowType() != null && userDataEntity.getFriendAllowType() == AllowFriendType.NOT_NEED.getCode()) {
@@ -241,6 +264,17 @@ public class FriendShipServiceImpl implements FriendShipService {
         friendShipEntities.add(fromItem);
         friendShipEntities.add(toItem);
         handleAddFriendShipResp.setFriendShipEntities(friendShipEntities);
+
+        //TODO: 添加好友之后回调
+        if (appConfig.isAddFriendAfterCallback()) {
+            AddFriendAfterCallbackDto callbackDto = new AddFriendAfterCallbackDto();
+            callbackDto.setFromId(req.getFromId());
+            callbackDto.setToItem(req.getToItem());
+            callbackService.afterCallback(req.getAppId(),
+                    Constants.CallbackCommand.ADDFRIENDAFTER, JSONObject
+                            .toJSONString(callbackDto));
+        }
+
         return ResponseVO.successResponse(handleAddFriendShipResp);
     }
 
