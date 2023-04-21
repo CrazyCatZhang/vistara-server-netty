@@ -1,15 +1,20 @@
 package com.catzhang.im.service.user.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.catzhang.im.common.ClientType;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.DelFlag;
 import com.catzhang.im.common.enums.UserErrorCode;
 import com.catzhang.im.common.exception.ApplicationException;
+import com.catzhang.im.common.route.RouteHandle;
+import com.catzhang.im.common.route.RouteInfo;
+import com.catzhang.im.common.utils.RouteInfoParseUtil;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
 import com.catzhang.im.service.user.model.req.*;
 import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.utils.ZKit;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +33,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     UserDataMapper userDataMapper;
+
+    @Autowired
+    ZKit zKit;
+
+    @Autowired
+    RouteHandle routeHandle;
 
     @Override
     public ResponseVO<ImportUserResp> importUser(ImportUserReq req) {
@@ -157,5 +168,20 @@ public class UserServiceImpl implements UserService {
         }
 
         throw new ApplicationException(UserErrorCode.MODIFY_USER_ERROR);
+    }
+
+    @Override
+    public ResponseVO<LoginResp> login(LoginReq req) {
+
+        List<String> allNodes = new ArrayList<>();
+        if (req.getClientType() == ClientType.WEB.getCode()) {
+            allNodes = zKit.getAllWebNode();
+        } else {
+            allNodes = zKit.getAllTcpNode();
+        }
+        String s = routeHandle.routeServer(allNodes, req.getUserId());
+        RouteInfo parse = RouteInfoParseUtil.parse(s);
+
+        return ResponseVO.successResponse(new LoginResp(parse.getIp(), parse.getPort()));
     }
 }

@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * @author crazycatzhang
  */
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.catzhang.im.service",
+        "com.catzhang.im.common"})
 @MapperScan("com.catzhang.im.service.*.dao.mapper")
 public class ServiceApplication {
 

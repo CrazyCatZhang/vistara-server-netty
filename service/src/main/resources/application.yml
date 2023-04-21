@@ -10,6 +10,10 @@ spring:
   application:
     name: im-core
 
+appConfig:
+    zkAddr: 127.0.0.1:2181 # zk连接地址
+    zkConnectTimeOut: 50000 #zk超时时间
+
 # logger 配置
 logging:
   config: classpath:logback-spring.xml

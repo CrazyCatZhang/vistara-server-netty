@@ -17,4 +17,6 @@ public interface UserService {
     ResponseVO<GetSingleUserInfoResp> getSingleUserInfo(GetSingleUserInfoReq req);
 
     ResponseVO<ModifyUserInfoResp> modifyUserInfo(ModifyUserInfoReq req);
+
+    ResponseVO<LoginResp> login(LoginReq req);
 }

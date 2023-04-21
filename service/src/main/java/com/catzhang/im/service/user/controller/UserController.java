@@ -1,6 +1,7 @@
 package com.catzhang.im.service.user.controller;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.route.RouteHandle;
 import com.catzhang.im.service.user.model.req.*;
 import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
@@ -17,6 +18,9 @@ public class UserController {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    RouteHandle routeHandle;
 
     @PostMapping("import")
     public ResponseVO<ImportUserResp> importUser(@RequestBody ImportUserReq req) {
@@ -41,5 +45,10 @@ public class UserController {
     @PutMapping("modifyUserInfo")
     public ResponseVO<ModifyUserInfoResp> modifyUserInfo(@RequestBody @Validated ModifyUserInfoReq req) {
         return userService.modifyUserInfo(req);
+    }
+
+    @PostMapping("login")
+    public ResponseVO<LoginResp> login(@RequestBody @Validated LoginReq req) {
+        return userService.login(req);
     }
 }
