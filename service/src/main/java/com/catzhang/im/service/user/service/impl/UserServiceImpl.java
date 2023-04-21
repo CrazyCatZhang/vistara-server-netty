@@ -1,8 +1,11 @@
 package com.catzhang.im.service.user.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.common.ClientType;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.config.AppConfig;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.DelFlag;
 import com.catzhang.im.common.enums.UserErrorCode;
 import com.catzhang.im.common.exception.ApplicationException;
@@ -14,6 +17,7 @@ import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
 import com.catzhang.im.service.user.model.req.*;
 import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.utils.CallbackService;
 import com.catzhang.im.service.utils.ZKit;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +43,12 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     RouteHandle routeHandle;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    CallbackService callbackService;
 
     @Override
     public ResponseVO<ImportUserResp> importUser(ImportUserReq req) {
@@ -163,6 +173,14 @@ public class UserServiceImpl implements UserService {
         ModifyUserInfoResp modifyUserInfoResp = new ModifyUserInfoResp();
 
         if (update == 1) {
+
+            //TODO 用户资料变更回调
+            if (appConfig.isModifyUserAfterCallback()) {
+                callbackService.afterCallback(req.getAppId(),
+                        Constants.CallbackCommand.MODIFYUSERAFTER,
+                        JSONObject.toJSONString(req));
+            }
+
             modifyUserInfoResp.setUserDataEntity(userDataEntity);
             return ResponseVO.successResponse(modifyUserInfoResp);
         }

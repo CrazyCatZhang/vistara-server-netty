@@ -61,4 +61,41 @@ public class Constants {
 
     }
 
+    public static class CallbackCommand{
+        public static final String MODIFYUSERAFTER = "user.modify.after";
+
+        public static final String CREATEGROUPAFTER = "group.create.after";
+
+        public static final String UPDATEGROUPAFTER = "group.update.after";
+
+        public static final String DESTROYGROUPAFTER = "group.destroy.after";
+
+        public static final String TRANSFERGROUPAFTER = "group.transfer.after";
+
+        public static final String GROUPMEMBERADDBEFORE = "group.member.add.before";
+
+        public static final String GROUPMEMBERADDAFTER = "group.member.add.after";
+
+        public static final String GROUPMEMBERDELETEAFTER = "group.member.delete.after";
+
+        public static final String ADDFRIENDBEFORE = "friend.add.before";
+
+        public static final String ADDFRIENDAFTER = "friend.add.after";
+
+        public static final String UPDATEFRIENDBEFORE = "friend.update.before";
+
+        public static final String UPDATEFRIENDAFTER = "friend.update.after";
+
+        public static final String DELETEFRIENDAFTER = "friend.delete.after";
+
+        public static final String ADDBLACKAFTER = "black.add.after";
+
+        public static final String DELETEBLACK = "black.delete";
+
+        public static final String SENDMESSAGEAFTER = "message.send.after";
+
+        public static final String SENDMESSAGEBEFORE = "message.send.before";
+
+    }
+
 }
