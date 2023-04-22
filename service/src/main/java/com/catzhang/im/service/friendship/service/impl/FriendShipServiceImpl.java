@@ -11,11 +11,14 @@ import com.catzhang.im.common.enums.*;
 import com.catzhang.im.common.enums.command.FriendshipEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
+import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipMapper;
 import com.catzhang.im.service.friendship.model.callback.*;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
+import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
+import com.catzhang.im.service.friendship.service.FriendShipGroupService;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
@@ -32,9 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -62,6 +63,12 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Autowired
     MessageProducer messageProducer;
+
+    @Autowired
+    FriendShipGroupMemberService friendShipGroupMemberService;
+
+    @Autowired
+    FriendShipGroupService friendShipGroupService;
 
     @Override
     public ResponseVO<ImportFriendShipResp> importFriendShip(ImportFriendShipReq req) {
@@ -384,6 +391,49 @@ public class FriendShipServiceImpl implements FriendShipService {
             if (friendShipEntity.getStatus() != null && friendShipEntity.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
                 friendShipEntity.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
                 friendShipMapper.update(friendShipEntity, lambdaQueryWrapper);
+
+                //TODO: 删除好友之后也应该删除好友分组的对应成员
+                GetAllFriendShipGroupReq getAllFriendShipGroupReq = new GetAllFriendShipGroupReq();
+                getAllFriendShipGroupReq.setFromId(req.getFromId());
+                getAllFriendShipGroupReq.setAppId(req.getAppId());
+                ResponseVO<GetAllFriendShipGroupResp> allFriendShipGroup = friendShipGroupService.getAllFriendShipGroup(getAllFriendShipGroupReq);
+                if (allFriendShipGroup.isOk()) {
+                    GetFriendShipGroupReq getFriendShipGroupReq = new GetFriendShipGroupReq();
+                    BeanUtils.copyProperties(getAllFriendShipGroupReq, getFriendShipGroupReq);
+
+                    GetAllFriendShipGroupMemberReq getAllFriendShipGroupMemberReq = new GetAllFriendShipGroupMemberReq();
+                    getAllFriendShipGroupMemberReq.setAppId(req.getAppId());
+
+                    DeleteFriendShipGroupMemberReq deleteFriendShipGroupMemberReq = new DeleteFriendShipGroupMemberReq();
+                    BeanUtils.copyProperties(getAllFriendShipGroupReq, deleteFriendShipGroupMemberReq);
+
+                    Set<String> groupNames = allFriendShipGroup.getData().getGroups().keySet();
+                    groupNames.forEach(groupName -> {
+                        getFriendShipGroupReq.setGroupName(groupName);
+                        deleteFriendShipGroupMemberReq.setGroupName(groupName);
+
+                        ResponseVO<GetFriendShipGroupResp> friendShipGroup = friendShipGroupService.getFriendShipGroup(getFriendShipGroupReq);
+                        Long groupId = friendShipGroup.getData().getFriendShipGroupEntity().getGroupId();
+
+                        getAllFriendShipGroupMemberReq.setGroupId(groupId);
+                        ResponseVO<GetAllFriendShipGroupMemberResp> allFriendShipGroupMember = friendShipGroupMemberService.getAllFriendShipGroupMember(getAllFriendShipGroupMemberReq);
+
+                        List<String> toIds = new ArrayList<>();
+
+                        if (allFriendShipGroupMember.isOk()) {
+                            List<FriendShipGroupMemberEntity> friendShipGroupMemberEntityList = allFriendShipGroupMember.getData().getFriendShipGroupMemberEntityList();
+                            friendShipGroupMemberEntityList.forEach(item -> {
+                                toIds.clear();
+                                if (Objects.equals(item.getToId(), req.getToId())) {
+                                    toIds.add(item.getToId());
+                                    deleteFriendShipGroupMemberReq.setToIds(toIds);
+                                    friendShipGroupMemberService.deleteFriendShipGroupMember(deleteFriendShipGroupMemberReq);
+                                }
+                            });
+                        }
+                    });
+                }
+
 
                 //TODO: 删除好友消息通知
                 DeleteFriendPack deleteFriendPack = new DeleteFriendPack();
