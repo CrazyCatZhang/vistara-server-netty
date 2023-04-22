@@ -3,10 +3,7 @@ package com.catzhang.im.service.friendship.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
-import com.catzhang.im.codec.pack.friendship.AddFriendPack;
-import com.catzhang.im.codec.pack.friendship.DeleteAllFriendPack;
-import com.catzhang.im.codec.pack.friendship.DeleteFriendPack;
-import com.catzhang.im.codec.pack.friendship.UpdateFriendPack;
+import com.catzhang.im.codec.pack.friendship.*;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
@@ -577,6 +574,14 @@ public class FriendShipServiceImpl implements FriendShipService {
 
         AddFriendShipBlackResp addFriendShipBlackResp = new AddFriendShipBlackResp();
         addFriendShipBlackResp.setBlackShipEntity(fromItem);
+
+        //TODO: 添加黑名单消息通知
+        AddFriendBlackPack addFriendBlackPack = new AddFriendBlackPack();
+        addFriendBlackPack.setFromId(req.getFromId());
+        addFriendBlackPack.setToId(req.getToId());
+        //发送tcp通知
+        messageProducer.sendToUser(req.getFromId(), req.getClientType(), req.getImei(),
+                FriendshipEventCommand.FRIEND_BLACK_ADD, addFriendBlackPack, req.getAppId());
 
         //TODO: 添加黑名单之后回调
         if (appConfig.isAddFriendShipBlackAfterCallback()) {
