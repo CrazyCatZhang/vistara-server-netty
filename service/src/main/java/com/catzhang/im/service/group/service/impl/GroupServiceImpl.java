@@ -4,11 +4,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.catzhang.im.codec.pack.group.CreateGroupPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.*;
+import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
+import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMapper;
@@ -23,6 +26,7 @@ import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.CallbackService;
+import com.catzhang.im.service.utils.GroupMessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +61,9 @@ public class GroupServiceImpl implements GroupService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    GroupMessageProducer groupMessageProducer;
 
     @Override
     public ResponseVO importGroup(ImportGroupReq req) {
@@ -176,6 +183,12 @@ public class GroupServiceImpl implements GroupService {
         }
 
         groupInfo.put(req.getGroupName(), members);
+
+        //TODO: 创建群通知
+        CreateGroupPack createGroupPack = new CreateGroupPack();
+        BeanUtils.copyProperties(groupEntity, createGroupPack);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.CREATED_GROUP, createGroupPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         //TODO: 创建群之后回调
         if (appConfig.isCreateGroupAfterCallback()) {
