@@ -14,6 +14,15 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "appconfig")
 public class AppConfig {
 
+    /** im服务地址 */
+    private String imUrl;
+
+    /** im服务版本 */
+    private String imVersion;
+
+    /** 管理员Id */
+    private String adminId;
+
     /** appId */
     private Integer appId;
 

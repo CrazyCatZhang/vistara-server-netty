@@ -107,6 +107,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             groupMemberEntity.setGroupId(req.getGroupId());
             groupMemberEntity.setAppId(req.getAppId());
             groupMemberEntity.setJoinTime(System.currentTimeMillis());
+            if (groupMember.getRole() == null) {
+                groupMemberEntity.setRole(GroupMemberRole.ORDINARY.getCode());
+            }
             int insert = groupMemberMapper.insert(groupMemberEntity);
             if (insert == 1) {
                 return ResponseVO.successResponse(new AddGroupMemberResp(groupMemberEntity));
@@ -114,6 +117,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
         } else if (GroupMemberRole.LEAVE.getCode() == groupMember.getRole()) {
             BeanUtils.copyProperties(groupMember, groupMemberEntity);
+            groupMemberEntity.setRole(GroupMemberRole.ORDINARY.getCode());
             groupMemberEntity.setMute(mute);
             groupMemberEntity.setJoinTime(System.currentTimeMillis());
             int update = groupMemberMapper.update(groupMemberEntity, lambdaQueryWrapper);
@@ -251,11 +255,13 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         List<GroupMemberDto> members = req.getMembers();
 
+        logger.info(members.toString());
 
         // TODO：添加群成员之前回调
         if (appConfig.isAddGroupMemberBeforeCallback()) {
             ResponseVO responseVO = callbackService.beforeCallback(req.getAppId(), Constants.CallbackCommand.GROUPMEMBERADDBEFORE
                     , JSONObject.toJSONString(req));
+            logger.info(responseVO.toString());
             if (!responseVO.isOk()) {
                 return responseVO;
             }

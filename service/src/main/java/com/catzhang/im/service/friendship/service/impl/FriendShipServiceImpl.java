@@ -222,12 +222,14 @@ public class FriendShipServiceImpl implements FriendShipService {
         getFriendShipRequestReq.setAppId(req.getAppId());
         getFriendShipRequestReq.setUserId(req.getToItem().getToId());
         ResponseVO<GetFriendShipRequestResp> friendShipRequest = friendShipRequestService.getFriendShipRequest(getFriendShipRequestReq);
-        List<FriendShipRequestEntity> friendShipRequestEntityList = friendShipRequest.getData().getFriendShipRequestEntityList();
-        friendShipRequestEntityList.forEach(item -> {
-            if (item.getFromId().equals(req.getFromId()) && item.getApproveStatus() == ApproveFriendRequestStatus.AGREE.getCode()) {
-                isApprovedFriendRequest.set(true);
-            }
-        });
+        if (friendShipRequest.isOk()) {
+            List<FriendShipRequestEntity> friendShipRequestEntityList = friendShipRequest.getData().getFriendShipRequestEntityList();
+            friendShipRequestEntityList.forEach(item -> {
+                if (item.getFromId().equals(req.getFromId()) && item.getApproveStatus() == ApproveFriendRequestStatus.AGREE.getCode()) {
+                    isApprovedFriendRequest.set(true);
+                }
+            });
+        }
 
         LambdaQueryWrapper<FriendShipEntity> toLambdaQueryWrapper = new LambdaQueryWrapper<>();
         toLambdaQueryWrapper.eq(FriendShipEntity::getAppId, req.getAppId())

@@ -36,7 +36,7 @@ public class CallbackService {
 
     public ResponseVO beforeCallback(Integer appId, String callbackCommand, String jsonBody) {
         try {
-            ResponseVO responseVO = httpRequestUtils.doPost("", ResponseVO.class, builderUrlParams(appId, callbackCommand),
+            ResponseVO responseVO = httpRequestUtils.doPost(appConfig.getCallbackUrl(), ResponseVO.class, builderUrlParams(appId, callbackCommand),
                     jsonBody, null);
             return responseVO;
         } catch (Exception e) {

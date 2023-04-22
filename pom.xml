@@ -39,6 +39,7 @@
         <module>service</module>
         <module>codec</module>
         <module>tcp</module>
+        <module>app-services</module>
     </modules>
 
     <dependencies>
