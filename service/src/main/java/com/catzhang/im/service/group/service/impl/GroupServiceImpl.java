@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.codec.pack.group.CreateGroupPack;
+import com.catzhang.im.codec.pack.group.DestroyGroupPack;
 import com.catzhang.im.codec.pack.group.UpdateGroupInfoPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
@@ -321,6 +322,13 @@ public class GroupServiceImpl implements GroupService {
         if (update != 1) {
             throw new ApplicationException(GroupErrorCode.UPDATE_GROUP_BASE_INFO_ERROR);
         }
+
+        //TODO: 解散群通知
+        DestroyGroupPack pack = new DestroyGroupPack();
+        pack.setSequence(seq);
+        pack.setGroupId(req.getGroupId());
+        groupMessageProducer.producer(req.getOperator(),
+                GroupEventCommand.DESTROY_GROUP, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         //TODO: 解散群之后回调
         if (appConfig.isDestroyGroupAfterCallback()) {
