@@ -3,6 +3,7 @@ package com.catzhang.im.service.friendship.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendGroupPack;
+import com.catzhang.im.codec.pack.friendship.DeleteFriendGroupPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.DelFlagEnum;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
@@ -162,6 +163,15 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
                 failureGroups.put(groupName, FriendShipErrorCode.FRIEND_SHIP_GROUP_IS_NOT_EXIST.getError());
             }
         }
+
+        //TODO: 删除好友分组消息通知
+        DeleteFriendGroupPack deleteFriendGroupPack = new DeleteFriendGroupPack();
+        deleteFriendGroupPack.setFromId(req.getFromId());
+        deleteFriendGroupPack.setGroupNames(req.getGroupNames());
+        //TCP通知
+        messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_DELETE,
+                deleteFriendGroupPack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
         return ResponseVO.successResponse(new DeleteFriendShipGroupResp(successGroups, failureGroups));
     }
 
