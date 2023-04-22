@@ -228,6 +228,12 @@ public class GroupServiceImpl implements GroupService {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
         }
 
+        //TODO: 更新群之后回调
+        if (appConfig.isModifyGroupAfterCallback()) {
+            callbackService.afterCallback(req.getAppId(), Constants.CallbackCommand.UPDATEGROUPAFTER,
+                    JSONObject.toJSONString(groupMapper.selectOne(lambdaQueryWrapper)));
+        }
+
         return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
     }
 
