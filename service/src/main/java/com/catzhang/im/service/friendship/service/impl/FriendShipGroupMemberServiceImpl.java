@@ -2,6 +2,7 @@ package com.catzhang.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendGroupMemberPack;
+import com.catzhang.im.codec.pack.friendship.DeleteFriendGroupMemberPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.enums.command.FriendshipEventCommand;
@@ -177,6 +178,14 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
                 }
             }
         });
+
+        //TODO: 删除好友分组成员通知
+        DeleteFriendGroupMemberPack pack = new DeleteFriendGroupMemberPack();
+        pack.setFromId(req.getFromId());
+        pack.setGroupName(req.getGroupName());
+        pack.setToIds(successIds);
+        messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_MEMBER_DELETE,
+                pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new DeleteFriendShipGroupMemberResp(successIds, failureIds));
     }
