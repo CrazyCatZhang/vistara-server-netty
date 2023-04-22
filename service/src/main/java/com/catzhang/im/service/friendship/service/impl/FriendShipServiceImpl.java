@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendPack;
+import com.catzhang.im.codec.pack.friendship.UpdateFriendPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
@@ -346,6 +347,14 @@ public class FriendShipServiceImpl implements FriendShipService {
             FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
             HandleUpdateFriendShipResp handleUpdateFriendShipResp = new HandleUpdateFriendShipResp();
             handleUpdateFriendShipResp.setFriendShipEntity(friendShipEntity);
+
+            //TODO: 更新好友信息通知
+            UpdateFriendPack updateFriendPack = new UpdateFriendPack();
+            updateFriendPack.setRemark(req.getToItem().getRemark());
+            updateFriendPack.setToId(req.getToItem().getToId());
+            messageProducer.sendToUser(req.getFromId(),
+                    req.getClientType(), req.getImei(), FriendshipEventCommand
+                            .FRIEND_UPDATE, updateFriendPack, req.getAppId());
 
             //TODO: 更新好友信息之后回调
             if (appConfig.isModifyFriendAfterCallback()) {
