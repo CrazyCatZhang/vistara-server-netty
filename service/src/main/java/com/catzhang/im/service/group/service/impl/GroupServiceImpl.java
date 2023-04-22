@@ -13,6 +13,7 @@ import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMapper;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
+import com.catzhang.im.service.group.model.callback.DestroyGroupCallbackDto;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
@@ -299,6 +300,15 @@ public class GroupServiceImpl implements GroupService {
         int update = groupMapper.update(groupEntity, lambdaQueryWrapper);
         if (update != 1) {
             throw new ApplicationException(GroupErrorCode.UPDATE_GROUP_BASE_INFO_ERROR);
+        }
+
+        //TODO: 解散群之后回调
+        if (appConfig.isDestroyGroupAfterCallback()) {
+            DestroyGroupCallbackDto dto = new DestroyGroupCallbackDto();
+            dto.setGroupId(req.getGroupId());
+            callbackService.afterCallback(req.getAppId()
+                    , Constants.CallbackCommand.DESTROYGROUPAFTER,
+                    JSONObject.toJSONString(dto));
         }
 
         return ResponseVO.successResponse(new UpdateGroupInfoResp(groupEntity));
