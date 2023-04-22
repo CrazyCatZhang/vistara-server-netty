@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendPack;
+import com.catzhang.im.codec.pack.friendship.DeleteAllFriendPack;
+import com.catzhang.im.codec.pack.friendship.DeleteFriendPack;
 import com.catzhang.im.codec.pack.friendship.UpdateFriendPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
@@ -386,6 +388,15 @@ public class FriendShipServiceImpl implements FriendShipService {
                 friendShipEntity.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
                 friendShipMapper.update(friendShipEntity, lambdaQueryWrapper);
 
+                //TODO: 删除好友消息通知
+                DeleteFriendPack deleteFriendPack = new DeleteFriendPack();
+                deleteFriendPack.setFromId(req.getFromId());
+                deleteFriendPack.setToId(req.getToId());
+                messageProducer.sendToUser(req.getFromId(),
+                        req.getClientType(), req.getImei(),
+                        FriendshipEventCommand.FRIEND_DELETE,
+                        deleteFriendPack, req.getAppId());
+
                 //TODO: 删除好友之后回调
                 if (appConfig.isAddFriendAfterCallback()) {
                     DeleteFriendAfterCallbackDto callbackDto = new DeleteFriendAfterCallbackDto();
@@ -419,6 +430,13 @@ public class FriendShipServiceImpl implements FriendShipService {
         FriendShipEntity update = new FriendShipEntity();
         update.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
         friendShipMapper.update(update, lambdaQueryWrapper);
+
+        //TODO: 删除所有好友消息通知
+        DeleteAllFriendPack deleteFriendPack = new DeleteAllFriendPack();
+        deleteFriendPack.setFromId(req.getFromId());
+        messageProducer.sendToUser(req.getFromId(), req.getClientType(), req.getImei(), FriendshipEventCommand.FRIEND_ALL_DELETE,
+                deleteFriendPack, req.getAppId());
+
         DeleteAllFriendShipResp deleteAllFriendShipResp = new DeleteAllFriendShipResp();
         deleteAllFriendShipResp.setFriendShipEntities(friendShipEntities);
         return ResponseVO.successResponse(deleteAllFriendShipResp);
