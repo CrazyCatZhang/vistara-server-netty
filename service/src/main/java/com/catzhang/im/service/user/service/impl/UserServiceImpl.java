@@ -2,12 +2,14 @@ package com.catzhang.im.service.user.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.catzhang.im.codec.pack.user.UserModifyPack;
 import com.catzhang.im.common.ClientType;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.DelFlag;
 import com.catzhang.im.common.enums.UserErrorCode;
+import com.catzhang.im.common.enums.command.UserEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.common.route.RouteHandle;
 import com.catzhang.im.common.route.RouteInfo;
@@ -18,6 +20,7 @@ import com.catzhang.im.service.user.model.req.*;
 import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.CallbackService;
+import com.catzhang.im.service.utils.MessageProducer;
 import com.catzhang.im.service.utils.ZKit;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    MessageProducer messageProducer;
 
     @Override
     public ResponseVO<ImportUserResp> importUser(ImportUserReq req) {
@@ -173,6 +179,12 @@ public class UserServiceImpl implements UserService {
         ModifyUserInfoResp modifyUserInfoResp = new ModifyUserInfoResp();
 
         if (update == 1) {
+
+            //TODO: 发送用户资料变更通知
+            UserModifyPack pack = new UserModifyPack();
+            BeanUtils.copyProperties(req, pack);
+            messageProducer.sendToUser(req.getUserId(), req.getClientType(), req.getImei(),
+                    UserEventCommand.USER_MODIFY, pack, req.getAppId());
 
             //TODO 用户资料变更回调
             if (appConfig.isModifyUserAfterCallback()) {
