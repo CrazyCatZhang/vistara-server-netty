@@ -617,6 +617,13 @@ public class FriendShipServiceImpl implements FriendShipService {
             return ResponseVO.errorResponse();
         }
 
+        //TODO: 删除黑名单消息通知
+        DeleteBlackPack deleteFriendPack = new DeleteBlackPack();
+        deleteFriendPack.setFromId(req.getFromId());
+        deleteFriendPack.setToId(req.getToId());
+        messageProducer.sendToUser(req.getFromId(), req.getClientType(), req.getImei(), FriendshipEventCommand.FRIEND_BLACK_DELETE,
+                deleteFriendPack, req.getAppId());
+
         //TODO: 删除黑名单之后回调
         if (appConfig.isDeleteFriendShipBlackAfterCallback()) {
             DeleteFriendBlackAfterCallbackDto callbackDto = new DeleteFriendBlackAfterCallbackDto();
