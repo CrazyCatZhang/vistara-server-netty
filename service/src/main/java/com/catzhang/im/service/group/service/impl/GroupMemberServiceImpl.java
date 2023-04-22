@@ -1,9 +1,13 @@
 package com.catzhang.im.service.group.service.impl;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.config.AppConfig;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.common.enums.GroupStatus;
@@ -12,6 +16,7 @@ import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
+import com.catzhang.im.service.group.model.callback.AddMemberAfterCallbackDto;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
@@ -19,7 +24,10 @@ import com.catzhang.im.service.group.service.GroupService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.utils.CallbackService;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,6 +44,9 @@ import java.util.List;
 @Service
 public class GroupMemberServiceImpl implements GroupMemberService {
 
+    private final Logger logger = LoggerFactory.getLogger(GroupMemberServiceImpl.class);
+
+
     @Autowired
     GroupMemberMapper groupMemberMapper;
 
@@ -44,6 +55,12 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Autowired
     GroupService groupService;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    CallbackService callbackService;
 
     @Override
     @Transactional
@@ -233,6 +250,25 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         }
 
         List<GroupMemberDto> members = req.getMembers();
+
+
+        // TODO：添加群成员之前回调
+        if (appConfig.isAddGroupMemberBeforeCallback()) {
+            ResponseVO responseVO = callbackService.beforeCallback(req.getAppId(), Constants.CallbackCommand.GROUPMEMBERADDBEFORE
+                    , JSONObject.toJSONString(req));
+            if (!responseVO.isOk()) {
+                return responseVO;
+            }
+
+            try {
+                members = JSONArray.parseArray(JSONObject.toJSONString(responseVO.getData()), GroupMemberDto.class);
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.error("GroupMemberAddBefore 回调失败：{}", req.getAppId());
+            }
+        }
+
+
         GetGroupResp data = group.getData();
         boolean isAdmin = false;
 
@@ -255,6 +291,18 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             addMemberResp.setResultMessage(addGroupMemberRespResponseVO.getMsg());
             resp.add(addMemberResp);
         });
+
+        //TODO: 添加群成员之后回调
+        if (appConfig.isAddGroupMemberAfterCallback()) {
+            AddMemberAfterCallbackDto dto = new AddMemberAfterCallbackDto();
+            dto.setGroupId(req.getGroupId());
+            dto.setGroupType(data.getGroupType());
+            dto.setMember(resp);
+            dto.setOperator(req.getOperator());
+            callbackService.afterCallback(req.getAppId()
+                    , Constants.CallbackCommand.GROUPMEMBERADDAFTER,
+                    JSONObject.toJSONString(dto));
+        }
 
         return ResponseVO.successResponse(resp);
     }
