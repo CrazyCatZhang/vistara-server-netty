@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.codec.pack.group.CreateGroupPack;
+import com.catzhang.im.codec.pack.group.UpdateGroupInfoPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
@@ -241,6 +242,12 @@ public class GroupServiceImpl implements GroupService {
         if (update != 1) {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_MANAGER_ROLE);
         }
+
+        //TODO: 更新群通知
+        UpdateGroupInfoPack pack = new UpdateGroupInfoPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.UPDATED_GROUP,
+                pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         //TODO: 更新群之后回调
         if (appConfig.isModifyGroupAfterCallback()) {
