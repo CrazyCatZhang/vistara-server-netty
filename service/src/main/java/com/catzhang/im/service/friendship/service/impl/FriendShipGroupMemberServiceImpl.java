@@ -1,8 +1,11 @@
 package com.catzhang.im.service.friendship.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.catzhang.im.codec.pack.friendship.AddFriendGroupMemberPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
+import com.catzhang.im.common.enums.command.FriendshipEventCommand;
+import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipGroupMemberMapper;
 import com.catzhang.im.service.friendship.model.req.*;
@@ -13,6 +16,7 @@ import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.utils.MessageProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +41,9 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    MessageProducer messageProducer;
 
     @Override
     @Transactional
@@ -94,6 +101,15 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
                 return ResponseVO.errorResponse(singleUserInfo.getCode(), toId + singleUserInfo.getMsg());
             }
         }
+
+        //TODO: 添加好友分组成员通知
+        AddFriendGroupMemberPack pack = new AddFriendGroupMemberPack();
+        pack.setFromId(req.getFromId());
+        pack.setGroupName(req.getGroupName());
+        pack.setToIds(successIds);
+        messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_MEMBER_ADD,
+                pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
         return ResponseVO.successResponse(new AddFriendShipGroupMemberResp(successIds, failureIds));
     }
 
