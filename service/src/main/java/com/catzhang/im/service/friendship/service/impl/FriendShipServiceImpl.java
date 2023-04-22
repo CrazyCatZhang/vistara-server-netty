@@ -3,10 +3,12 @@ package com.catzhang.im.service.friendship.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.catzhang.im.codec.pack.friendship.AddFriendPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.*;
+import com.catzhang.im.common.enums.command.FriendshipEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
@@ -23,6 +25,7 @@ import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.CallbackService;
+import com.catzhang.im.service.utils.MessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +59,9 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    MessageProducer messageProducer;
 
     @Override
     public ResponseVO<ImportFriendShipResp> importFriendShip(ImportFriendShipReq req) {
@@ -266,6 +272,20 @@ public class FriendShipServiceImpl implements FriendShipService {
         friendShipEntities.add(fromItem);
         friendShipEntities.add(toItem);
         handleAddFriendShipResp.setFriendShipEntities(friendShipEntities);
+
+        //TODO: 添加好友消息通知
+        AddFriendPack addFriendPack = new AddFriendPack();
+        BeanUtils.copyProperties(fromItem, addFriendPack);
+        messageProducer.sendToUser(fromItem.getFromId(), req.getClientType(),
+                req.getImei(), FriendshipEventCommand.FRIEND_ADD, addFriendPack
+                , req.getAppId());
+
+        AddFriendPack addFriendToPack = new AddFriendPack();
+        BeanUtils.copyProperties(toItem, addFriendPack);
+        messageProducer.sendToUser(toItem.getFromId(),
+                FriendshipEventCommand.FRIEND_ADD, addFriendToPack
+                , req.getAppId());
+
 
         //TODO: 添加好友之后回调
         if (appConfig.isAddFriendAfterCallback()) {
