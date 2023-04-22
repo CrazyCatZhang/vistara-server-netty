@@ -7,6 +7,40 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/im-core?serverTimezone=UTC&useSSL=false&characterEncoding=UTF8
     username: root
 
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: sincera124
+    jedis:
+      pool:
+        max-active: 100
+        max-idle: 100
+        max-wait: 1000ms
+        min-idle: 10
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    addresses: localhost
+    username: guest
+    password: guest
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+        acknowledge-mode: MANUAL
+        prefetch: 1
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+    cache:
+      connection:
+        mode: channel
+      channel:
+        size: 36
+        checkout-timeout: 0ms
+
   application:
     name: im-core
 
@@ -21,7 +55,7 @@ appConfig:
   webSocketPort: 19000 # webSocket端口
   needWebSocket: true #是否需要开启webSocket
   loginModel: 1
-  messageRecallTimeOut : 1200000000 #消息可撤回时间，单位毫秒
+  messageRecallTimeOut: 1200000000 #消息可撤回时间，单位毫秒
   #  *                多端同步模式：1 只允许一端在线，手机/电脑/web 踢掉除了本client+imel的设备
   #  *                            2 允许手机/电脑的一台设备 + web在线 踢掉除了本client+imel的非web端设备
   #  *                            3 允许手机和电脑单设备 + web 同时在线 踢掉非本client+imel的同端设备
@@ -31,7 +65,7 @@ appConfig:
   sendMessageCheckBlack: false # 发送消息是否校验黑名单
   callbackUrl: http://127.0.0.1:8989/callback
   modifyUserAfterCallback: true # 用户资料变更之后回调开关
-  addFriendAfterCallback:  true # 添加好友之后回调开关
+  addFriendAfterCallback: true # 添加好友之后回调开关
   addFriendBeforeCallback: true # 添加好友之前回调开关
   modifyFriendAfterCallback: true # 修改好友之后回调开关
   deleteFriendAfterCallback: true # 删除好友之后回调开关
