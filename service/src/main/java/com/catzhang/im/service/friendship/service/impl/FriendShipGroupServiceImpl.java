@@ -2,9 +2,12 @@ package com.catzhang.im.service.friendship.service.impl;
 
 import cn.hutool.core.collection.CollectionUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.catzhang.im.codec.pack.friendship.AddFriendGroupPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.DelFlagEnum;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
+import com.catzhang.im.common.enums.command.FriendshipEventCommand;
+import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.mapper.FriendShipGroupMapper;
@@ -12,6 +15,7 @@ import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
+import com.catzhang.im.service.utils.MessageProducer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -34,6 +38,9 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
 
     @Autowired
     FriendShipGroupMemberService friendShipGroupMemberService;
+
+    @Autowired
+    MessageProducer messageProducer;
 
     @Override
     @Transactional
@@ -90,8 +97,15 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             if (!addFriendShipGroupMemberRespResponseVO.isOk()) {
                 return ResponseVO.errorResponse(addFriendShipGroupMemberRespResponseVO.getCode(), addFriendShipGroupMemberRespResponseVO.getMsg());
             }
-            return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
+//            return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
         }
+
+        //TODO: 添加好友分组消息通知
+        AddFriendGroupPack addFriendGropPack = new AddFriendGroupPack();
+        addFriendGropPack.setFromId(req.getFromId());
+        addFriendGropPack.setGroupName(req.getGroupName());
+        messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_ADD,
+                addFriendGropPack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
     }
