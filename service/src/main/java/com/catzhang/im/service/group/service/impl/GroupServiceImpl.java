@@ -325,7 +325,6 @@ public class GroupServiceImpl implements GroupService {
 
         //TODO: 解散群通知
         DestroyGroupPack pack = new DestroyGroupPack();
-        pack.setSequence(seq);
         pack.setGroupId(req.getGroupId());
         groupMessageProducer.producer(req.getOperator(),
                 GroupEventCommand.DESTROY_GROUP, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
