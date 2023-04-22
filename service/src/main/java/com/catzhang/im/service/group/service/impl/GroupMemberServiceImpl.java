@@ -367,6 +367,14 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         if (!removeMemberRespResponseVO.isOk()) {
             return ResponseVO.errorResponse(removeMemberRespResponseVO.getCode(), removeMemberRespResponseVO.getMsg());
         }
+
+        //TODO: 删除群成员之后回调
+        if (appConfig.isDeleteGroupMemberAfterCallback()) {
+            callbackService.afterCallback(req.getAppId(),
+                    Constants.CallbackCommand.GROUPMEMBERDELETEAFTER,
+                    JSONObject.toJSONString(req));
+        }
+
         return ResponseVO.successResponse(removeMemberRespResponseVO.getData());
     }
 
