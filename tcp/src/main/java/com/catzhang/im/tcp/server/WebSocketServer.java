@@ -1,6 +1,9 @@
 package com.catzhang.im.tcp.server;
 
+import com.catzhang.im.codec.WebSocketMessageDecoder;
+import com.catzhang.im.codec.WebSocketMessageEncoder;
 import com.catzhang.im.codec.config.BootstrapConfig;
+import com.catzhang.im.tcp.handler.NettyServerHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -31,7 +34,6 @@ public class WebSocketServer {
 
     public WebSocketServer(BootstrapConfig.TcpConfig tcpConfig) {
         this.tcpConfig = tcpConfig;
-        System.out.println(tcpConfig);
         bossGroup = new NioEventLoopGroup(tcpConfig.getWorkThreadSize());
         workerGroup = new NioEventLoopGroup(tcpConfig.getWorkThreadSize());
         server = new ServerBootstrap();
@@ -58,6 +60,9 @@ public class WebSocketServer {
                          * 对于websocket来讲，都是以frames进行传输的，不同的数据类型对应的frames也不同
                          */
                         pipeline.addLast(new WebSocketServerProtocolHandler("/ws"));
+                        pipeline.addLast(new WebSocketMessageDecoder());
+                        pipeline.addLast(new WebSocketMessageEncoder());
+                        pipeline.addLast(new NettyServerHandler(tcpConfig.getBrokerId()));
                     }
                 });
     }

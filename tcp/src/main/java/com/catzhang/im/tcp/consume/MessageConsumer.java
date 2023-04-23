@@ -1,10 +1,13 @@
 package com.catzhang.im.tcp.consume;
 
+import com.alibaba.fastjson.JSONObject;
+import com.catzhang.im.codec.proto.MessagePack;
 import com.catzhang.im.common.constant.Constants;
+import com.catzhang.im.tcp.consume.process.BaseProcess;
+import com.catzhang.im.tcp.consume.process.ProcessFactory;
 import com.catzhang.im.tcp.utils.MqFactory;
 import com.rabbitmq.client.*;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +33,18 @@ public class MessageConsumer {
             channel.basicConsume(Constants.RabbitConstants.MESSAGESERVICETOIM + brokerId, false, new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                    String s = new String(body);
-                    logger.info(s);
+                    try {
+                        String msgStr = new String(body);
+                        logger.info(msgStr);
+                        MessagePack messagePack = JSONObject.parseObject(msgStr, MessagePack.class);
+                        BaseProcess messageProcess = ProcessFactory.getMessageProcess(messagePack.getCommand());
+                        messageProcess.process(messagePack);
+
+                        channel.basicAck(envelope.getDeliveryTag(), false);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        channel.basicNack(envelope.getDeliveryTag(), false, false);
+                    }
                 }
             });
         } catch (Exception e) {

@@ -89,6 +89,7 @@ public enum GroupEventCommand implements Command {
     }
 
 
+    @Override
     public int getCommand() {
         return command;
     }
