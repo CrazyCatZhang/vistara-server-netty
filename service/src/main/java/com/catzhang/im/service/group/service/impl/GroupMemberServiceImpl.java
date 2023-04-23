@@ -5,6 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.catzhang.im.codec.pack.group.AddGroupMemberPack;
+import com.catzhang.im.codec.pack.group.GroupMemberSpeakPack;
+import com.catzhang.im.codec.pack.group.RemoveGroupMemberPack;
+import com.catzhang.im.codec.pack.group.UpdateGroupMemberPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
@@ -12,7 +16,9 @@ import com.catzhang.im.common.enums.GroupErrorCode;
 import com.catzhang.im.common.enums.GroupMemberRole;
 import com.catzhang.im.common.enums.GroupStatus;
 import com.catzhang.im.common.enums.GroupType;
+import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
+import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMemberMapper;
@@ -25,6 +31,7 @@ import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.CallbackService;
+import com.catzhang.im.service.utils.GroupMessageProducer;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +68,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Autowired
     CallbackService callbackService;
+
+    @Autowired
+    GroupMessageProducer groupMessageProducer;
 
     @Override
     @Transactional
@@ -282,12 +292,15 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             throw new ApplicationException(GroupErrorCode.THIS_OPERATE_NEED_APPMANAGER_ROLE);
         }
 
+        List<String> successIds = new ArrayList<>();
+
         members.forEach(member -> {
             addGroupMemberReq.setGroupMember(member);
             ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = this.addGroupMember(addGroupMemberReq);
             AddMemberResp addMemberResp = new AddMemberResp();
             addMemberResp.setMemberId(member.getMemberId());
-            if (!addGroupMemberRespResponseVO.isOk()) {
+            if (addGroupMemberRespResponseVO.isOk()) {
+                successIds.add(member.getMemberId());
                 addMemberResp.setResult(0);
             } else if (addGroupMemberRespResponseVO.getCode() == GroupErrorCode.USER_IS_JOINED_GROUP.getCode()) {
                 addMemberResp.setResult(2);
@@ -297,6 +310,13 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             addMemberResp.setResultMessage(addGroupMemberRespResponseVO.getMsg());
             resp.add(addMemberResp);
         });
+
+        //TODO: 添加群成员通知
+        AddGroupMemberPack addGroupMemberPack = new AddGroupMemberPack();
+        addGroupMemberPack.setGroupId(req.getGroupId());
+        addGroupMemberPack.setMembers(successIds);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.ADDED_MEMBER, addGroupMemberPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         //TODO: 添加群成员之后回调
         if (appConfig.isAddGroupMemberAfterCallback()) {
@@ -373,6 +393,13 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         if (!removeMemberRespResponseVO.isOk()) {
             return ResponseVO.errorResponse(removeMemberRespResponseVO.getCode(), removeMemberRespResponseVO.getMsg());
         }
+
+        //TODO: 删除群成员通知
+        RemoveGroupMemberPack removeGroupMemberPack = new RemoveGroupMemberPack();
+        removeGroupMemberPack.setGroupId(req.getGroupId());
+        removeGroupMemberPack.setMember(req.getMemberId());
+        groupMessageProducer.producer(req.getMemberId(), GroupEventCommand.DELETED_MEMBER, removeGroupMemberPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         //TODO: 删除群成员之后回调
         if (appConfig.isDeleteGroupMemberAfterCallback()) {
@@ -555,6 +582,11 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             return ResponseVO.errorResponse();
         }
 
+        //TODO: 更新群成员通知
+        UpdateGroupMemberPack pack = new UpdateGroupMemberPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.UPDATED_MEMBER, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+
         return ResponseVO.successResponse(new UpdateGroupMemberResp(groupMemberEntity));
     }
 
@@ -630,6 +662,12 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         if (update != 1) {
             return ResponseVO.errorResponse(GroupErrorCode.MUTING_FAILED);
         }
+
+        //TODO: 禁言群成员通知
+        GroupMemberSpeakPack pack = new GroupMemberSpeakPack();
+        BeanUtils.copyProperties(req, pack);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.SPEAK_GROUP_MEMBER, pack,
+                new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new SpeakMemberResp(groupMemberEntity));
     }
