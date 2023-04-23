@@ -30,7 +30,7 @@ public class SignApi {
 
     public static void main(String[] args) throws InterruptedException {
         SignApi asd = new SignApi(10000, "123456");
-        String sign = asd.genUserSign("lld", 100000000);
+        String sign = asd.genUserSign("CatZhang", 100000000);
         JSONObject jsonObject = decodeUserSign(sign);
         System.out.println("sign:" + sign);
         System.out.println("decoder:" + jsonObject.toString());

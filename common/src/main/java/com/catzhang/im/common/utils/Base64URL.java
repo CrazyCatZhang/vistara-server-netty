@@ -1,9 +1,11 @@
 package com.catzhang.im.common.utils;
+
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 
 /**
@@ -30,7 +32,7 @@ public class Base64URL {
     }
 
     public static byte[] base64EncodeUrlNotReplace(byte[] input) {
-        byte[] base64 = new BASE64Encoder().encode(input).getBytes(Charset.forName("UTF-8"));
+        byte[] base64 = new BASE64Encoder().encode(input).getBytes(StandardCharsets.UTF_8);
         for (int i = 0; i < base64.length; ++i)
             switch (base64[i]) {
                 case '+':
@@ -63,7 +65,7 @@ public class Base64URL {
                 default:
                     break;
             }
-        return new BASE64Decoder().decodeBuffer(new String(input,"UTF-8"));
+        return new BASE64Decoder().decodeBuffer(new String(input, "UTF-8"));
     }
 
     public static byte[] base64DecodeUrl(byte[] input) throws IOException {
@@ -82,6 +84,6 @@ public class Base64URL {
                 default:
                     break;
             }
-        return new BASE64Decoder().decodeBuffer(base64.toString());
+        return new BASE64Decoder().decodeBuffer(Arrays.toString(base64));
     }
 }

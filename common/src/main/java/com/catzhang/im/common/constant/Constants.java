@@ -30,6 +30,11 @@ public class Constants {
     public static class RedisConstants {
 
         /**
+         * userSign，格式：appId:userSign:
+         */
+        public static final String USERSIGN = "userSign";
+
+        /**
          * 用户上线通知channel
          */
         public static final String USERLOGINCHANNEL
@@ -61,7 +66,7 @@ public class Constants {
 
     }
 
-    public static class CallbackCommand{
+    public static class CallbackCommand {
         public static final String MODIFYUSERAFTER = "user.modify.after";
 
         public static final String CREATEGROUPAFTER = "group.create.after";
