@@ -10,6 +10,7 @@ import com.catzhang.im.common.enums.ImConnectStatus;
 import com.catzhang.im.common.enums.command.SystemCommand;
 import com.catzhang.im.common.model.UserClientDto;
 import com.catzhang.im.common.model.UserSession;
+import com.catzhang.im.tcp.publish.MessageProducer;
 import com.catzhang.im.tcp.redis.RedisManager;
 import com.catzhang.im.tcp.utils.SessionSocketHolder;
 import io.netty.channel.ChannelHandlerContext;
@@ -81,6 +82,8 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());
+        } else {
+            MessageProducer.sendMessage(message, command);
         }
 
     }
