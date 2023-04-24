@@ -7,10 +7,17 @@ import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.model.req.GetRelationReq;
 import com.catzhang.im.service.friendship.model.resp.GetRelationResp;
 import com.catzhang.im.service.friendship.service.FriendShipService;
+import com.catzhang.im.service.group.model.req.GetGroupReq;
+import com.catzhang.im.service.group.model.req.GetRoleInGroupReq;
+import com.catzhang.im.service.group.model.resp.GetGroupResp;
+import com.catzhang.im.service.group.model.resp.GetRoleInGroupResp;
+import com.catzhang.im.service.group.service.GroupMemberService;
+import com.catzhang.im.service.group.service.GroupService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +35,12 @@ public class VerifySendMessageService {
 
     @Autowired
     FriendShipService friendShipService;
+
+    @Autowired
+    GroupService groupService;
+
+    @Autowired
+    GroupMemberService groupMemberService;
 
     public ResponseVO verifySenderForbiddenAndMuted(String fromId, Integer appId) {
 
@@ -95,4 +108,44 @@ public class VerifySendMessageService {
         return ResponseVO.successResponse();
     }
 
+    public ResponseVO verifyGroupMessage(String fromId, String groupId, Integer appId) {
+
+        ResponseVO responseVO = verifySenderForbiddenAndMuted(fromId, appId);
+        if (!responseVO.isOk()) {
+            return responseVO;
+        }
+
+        GetGroupReq getGroupReq = new GetGroupReq();
+        GetRoleInGroupReq getRoleInGroupReq = new GetRoleInGroupReq();
+        getGroupReq.setGroupId(groupId);
+        getGroupReq.setAppId(appId);
+        BeanUtils.copyProperties(getGroupReq, getRoleInGroupReq);
+
+        ResponseVO<GetGroupResp> group = groupService.getGroup(getGroupReq);
+        if (!group.isOk()) {
+            return group;
+        }
+
+        getRoleInGroupReq.setMemberId(fromId);
+
+        ResponseVO<GetRoleInGroupResp> roleInGroup = groupMemberService.getRoleInGroup(getRoleInGroupReq);
+        if (!roleInGroup.isOk()) {
+            return roleInGroup;
+        }
+
+        GetGroupResp groupData = group.getData();
+        GetRoleInGroupResp roleData = roleInGroup.getData();
+
+        if (groupData.getMute() == GroupMuteType.MUTE.getCode()
+                && (roleData.getRole() != GroupMemberRole.ADMINISTRATOR.getCode() || roleData.getRole() != GroupMemberRole.OWNER.getCode())) {
+            return ResponseVO.errorResponse(GroupErrorCode.THIS_GROUP_IS_MUTE);
+        }
+
+        if (roleData.getSpeakDate() != null && roleData.getSpeakDate() > System.currentTimeMillis()) {
+            return ResponseVO.errorResponse(GroupErrorCode.GROUP_MEMBER_IS_SPEAK);
+        }
+
+        return ResponseVO.successResponse();
+
+    }
 }
