@@ -51,7 +51,9 @@ public enum FriendShipErrorCode implements ApplicationExceptionEnum {
 
     YOU_HAVE_NOT_CREATED_GROUP(30023, "你还没有创建分组"),
 
-    FRIEND_REQUEST_APPROVED(30024, "好友申请已审批");
+    FRIEND_REQUEST_APPROVED(30024, "好友申请已审批"),
+
+    TARGET_IS_DELETED_YOU(30025, "对方已经把你删除");
 
     private final int code;
     private final String error;
