@@ -18,7 +18,7 @@ public class MessageProducer {
 
 
     public static void sendMessage(Message message, Integer command) {
-        Channel channel = null;
+        Channel channel;
         String channelName = Constants.RabbitConstants.IMTOMESSAGESERVICE;
         try {
             channel = MqFactory.getChannel(channelName);
