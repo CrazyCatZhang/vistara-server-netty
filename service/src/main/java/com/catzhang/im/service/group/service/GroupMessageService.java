@@ -5,11 +5,14 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.GroupMessageContent;
 import com.catzhang.im.service.group.model.req.GetGroupMemberIdReq;
+import com.catzhang.im.service.group.model.req.SendGroupMessageReq;
+import com.catzhang.im.service.group.model.resp.SendGroupMessageResp;
 import com.catzhang.im.service.message.service.MessageStoreService;
 import com.catzhang.im.service.message.service.VerifySendMessageService;
 import com.catzhang.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -84,6 +87,23 @@ public class GroupMessageService {
     public ResponseVO verifyImServerPermission(String fromId, String groupId, Integer appId) {
         ResponseVO responseVO = verifySendMessageService.verifySendGroupMessage(fromId, groupId, appId);
         return responseVO;
+    }
+
+    public ResponseVO<SendGroupMessageResp> send(SendGroupMessageReq req) {
+        SendGroupMessageResp sendGroupMessageResp = new SendGroupMessageResp();
+        GroupMessageContent message = new GroupMessageContent();
+        BeanUtils.copyProperties(req, message);
+
+        messageStoreService.storeGroupMessage(message);
+
+        sendGroupMessageResp.setMessageKey(message.getMessageKey());
+        sendGroupMessageResp.setMessageTime(System.currentTimeMillis());
+        //2.发消息给同步在线端
+        syncToSender(message);
+        //3.发消息给对方在线端
+        dispatchMessage(message);
+
+        return ResponseVO.successResponse(sendGroupMessageResp);
     }
 
 }

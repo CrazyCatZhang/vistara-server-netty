@@ -3,6 +3,7 @@ package com.catzhang.im.service.group.controller;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
+import com.catzhang.im.service.group.service.GroupMessageService;
 import com.catzhang.im.service.group.service.GroupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -17,6 +18,9 @@ public class GroupController {
 
     @Autowired
     GroupService groupService;
+
+    @Autowired
+    GroupMessageService groupMessageService;
 
     @PostMapping("import")
     public ResponseVO<ImportGroupResp> importGroup(@RequestBody @Validated ImportGroupReq req) {
@@ -61,5 +65,10 @@ public class GroupController {
     @PostMapping("add")
     public ResponseVO<AddGroupResp> addGroup(@RequestBody @Validated AddGroupReq req) {
         return groupService.addGroup(req);
+    }
+
+    @PostMapping("sendMessage")
+    public ResponseVO<SendGroupMessageResp> sendMessage(@RequestBody @Validated SendGroupMessageReq req) {
+        return groupMessageService.send(req);
     }
 }
