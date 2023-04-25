@@ -1,7 +1,10 @@
 package com.catzhang.im.service.message.service;
 
 import com.catzhang.im.common.enums.DelFlag;
+import com.catzhang.im.common.model.message.GroupMessageContent;
 import com.catzhang.im.common.model.message.MessageContent;
+import com.catzhang.im.service.group.dao.GroupMessageHistoryEntity;
+import com.catzhang.im.service.group.dao.mapper.GroupMessageHistoryMapper;
 import com.catzhang.im.service.message.dao.MessageBodyEntity;
 import com.catzhang.im.service.message.dao.MessageHistoryEntity;
 import com.catzhang.im.service.message.dao.mapper.MessageBodyMapper;
@@ -29,6 +32,9 @@ public class MessageStoreService {
 
     @Autowired
     SnowflakeIdWorker snowflakeIdWorker;
+
+    @Autowired
+    GroupMessageHistoryMapper groupMessageHistoryMapper;
 
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
@@ -71,6 +77,25 @@ public class MessageStoreService {
         list.add(fromHistory);
         list.add(toHistory);
         return list;
+    }
+
+    @Transactional
+    public void storeGroupMessage(GroupMessageContent messageContent) {
+        MessageBodyEntity messageBody = extractMessageBody(messageContent);
+        messageBodyMapper.insert(messageBody);
+        GroupMessageHistoryEntity groupMessageHistoryEntity = extractGroupMessageHistory(messageContent, messageBody);
+        groupMessageHistoryMapper.insert(groupMessageHistoryEntity);
+        messageContent.setMessageKey(messageBody.getMessageKey());
+    }
+
+    private GroupMessageHistoryEntity extractGroupMessageHistory(GroupMessageContent
+                                                                         messageContent, MessageBodyEntity messageBodyEntity) {
+        GroupMessageHistoryEntity result = new GroupMessageHistoryEntity();
+        BeanUtils.copyProperties(messageContent, result);
+        result.setGroupId(messageContent.getGroupId());
+        result.setMessageKey(messageBodyEntity.getMessageKey());
+        result.setCreateTime(System.currentTimeMillis());
+        return result;
     }
 
 }

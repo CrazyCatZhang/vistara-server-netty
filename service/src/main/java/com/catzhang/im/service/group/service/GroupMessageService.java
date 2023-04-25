@@ -5,6 +5,7 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.GroupMessageContent;
 import com.catzhang.im.service.group.model.req.GetGroupMemberIdReq;
+import com.catzhang.im.service.message.service.MessageStoreService;
 import com.catzhang.im.service.message.service.VerifySendMessageService;
 import com.catzhang.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
@@ -29,6 +30,9 @@ public class GroupMessageService {
     @Autowired
     MessageProducer messageProducer;
 
+    @Autowired
+    MessageStoreService messageStoreService;
+
     private static Logger logger = LoggerFactory.getLogger(GroupMessageService.class);
 
     public void process(GroupMessageContent messageContent) {
@@ -39,6 +43,7 @@ public class GroupMessageService {
         Integer appId = messageContent.getAppId();
         ResponseVO responseVO = verifyImServerPermission(fromId, groupId, appId);
         if (responseVO.isOk()) {
+            messageStoreService.storeGroupMessage(messageContent);
             ack(messageContent, responseVO);
             syncToSender(messageContent);
             dispatchMessage(messageContent);
