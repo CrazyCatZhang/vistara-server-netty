@@ -108,7 +108,7 @@ public class VerifySendMessageService {
         return ResponseVO.successResponse();
     }
 
-    public ResponseVO verifyGroupMessage(String fromId, String groupId, Integer appId) {
+    public ResponseVO verifySendGroupMessage(String fromId, String groupId, Integer appId) {
 
         ResponseVO responseVO = verifySenderForbiddenAndMuted(fromId, appId);
         if (!responseVO.isOk()) {

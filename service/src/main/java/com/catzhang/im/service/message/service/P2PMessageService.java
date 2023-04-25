@@ -42,7 +42,7 @@ public class P2PMessageService {
     }
 
     private void ack(MessageContent messageContent, ResponseVO responseVO) {
-        logger.info("msg ack,msgId={},checkResut{}", messageContent.getMessageId(), responseVO.getCode());
+        logger.info("msg ack,msgId={},checkResult{}", messageContent.getMessageId(), responseVO.getCode());
 
         ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
         responseVO.setData(chatMessageAck);
