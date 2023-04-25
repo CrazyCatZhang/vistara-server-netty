@@ -5,6 +5,7 @@ import com.catzhang.im.common.enums.ImUrlRouteWay;
 import com.catzhang.im.common.enums.RouteHashMethod;
 import com.catzhang.im.common.route.RouteHandle;
 import com.catzhang.im.common.route.algorithm.consistenthash.AbstractConsistentHash;
+import com.catzhang.im.service.utils.SnowflakeIdWorker;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -56,4 +57,13 @@ public class BeanConfig {
 
     }
 
+    @Bean
+    public EasySqlInjector easySqlInjector() {
+        return new EasySqlInjector();
+    }
+
+    @Bean
+    public SnowflakeIdWorker buildSnowflakeSeq() throws Exception {
+        return new SnowflakeIdWorker(0);
+    }
 }

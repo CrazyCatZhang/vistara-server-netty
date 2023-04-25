@@ -22,6 +22,9 @@ public class P2PMessageService {
     @Autowired
     MessageProducer messageProducer;
 
+    @Autowired
+    MessageStoreService messageStoreService;
+
     private static Logger logger = LoggerFactory.getLogger(P2PMessageService.class);
 
     public void process(MessageContent messageContent) {
@@ -32,6 +35,7 @@ public class P2PMessageService {
         Integer appId = messageContent.getAppId();
         ResponseVO responseVO = verifyImServerPermission(fromId, toId, appId);
         if (responseVO.isOk()) {
+            messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, responseVO);
             syncToSender(messageContent);
             dispatchMessage(messageContent);
