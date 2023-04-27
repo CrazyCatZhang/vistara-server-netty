@@ -1,5 +1,6 @@
 package com.catzhang.im.service.group.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -277,7 +278,8 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             }
 
             try {
-                members = JSONArray.parseArray(JSONObject.toJSONString(responseVO.getData()), GroupMemberDto.class);
+                AddMemberReq javaObject = JSONObject.toJavaObject((JSON) responseVO.getData(), AddMemberReq.class);
+                members = JSONArray.parseArray(JSONObject.toJSONString(javaObject.getMembers()), GroupMemberDto.class);
             } catch (Exception e) {
                 e.printStackTrace();
                 logger.error("GroupMemberAddBefore 回调失败：{}", req.getAppId());
