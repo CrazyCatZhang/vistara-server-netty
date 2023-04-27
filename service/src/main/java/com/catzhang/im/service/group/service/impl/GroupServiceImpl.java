@@ -329,6 +329,22 @@ public class GroupServiceImpl implements GroupService {
         groupMessageProducer.producer(req.getOperator(),
                 GroupEventCommand.DESTROY_GROUP, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
+        //TODO: 解散群之后应该清空该群的所有成员
+        GetGroupMemberIdReq getGroupMemberIdReq = new GetGroupMemberIdReq();
+        getGroupMemberIdReq.setAppId(req.getAppId());
+        getGroupMemberIdReq.setGroupId(req.getGroupId());
+        RemoveMemberReq removeMemberReq = new RemoveMemberReq();
+        BeanUtils.copyProperties(getGroupMemberIdReq, removeMemberReq);
+        removeMemberReq.setOperator(req.getOperator());
+        List<String> groupMemberIds = groupMemberService.getGroupMemberId(getGroupMemberIdReq);
+        for (String groupMemberId : groupMemberIds) {
+            removeMemberReq.setMemberId(groupMemberId);
+            ResponseVO<RemoveMemberResp> removeMemberRespResponseVO = groupMemberService.removeGroupMember(removeMemberReq);
+            if (!removeMemberRespResponseVO.isOk()) {
+                return ResponseVO.errorResponse(removeMemberRespResponseVO.getCode(),removeMemberRespResponseVO.getMsg());
+            }
+        }
+
         //TODO: 解散群之后回调
         if (appConfig.isDestroyGroupAfterCallback()) {
             DestroyGroupCallbackDto dto = new DestroyGroupCallbackDto();
