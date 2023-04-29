@@ -8,6 +8,7 @@ import com.catzhang.im.common.model.UserSession;
 import com.catzhang.im.tcp.redis.RedisManager;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.AttributeKey;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.api.RMap;
 import org.redisson.api.RedissonClient;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author crazycatzhang
  */
+@Slf4j
 public class SessionSocketHolder {
 
     private static final Map<UserClientDto, NioSocketChannel> CHANNELS = new ConcurrentHashMap<>();
@@ -71,6 +73,7 @@ public class SessionSocketHolder {
     }
 
     public static void offlineUserSession(NioSocketChannel nioSocketChannel) {
+        log.info("用户已离线.....");
         String userId = (String) nioSocketChannel.attr(AttributeKey.valueOf(Constants.USERID)).get();
         Integer appId = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.APPID)).get();
         Integer clientType = (Integer) nioSocketChannel.attr(AttributeKey.valueOf(Constants.CLIENTTYPE)).get();
@@ -80,7 +83,7 @@ public class SessionSocketHolder {
 
         RedissonClient redissonClient = RedisManager.getRedissonClient();
         RMap<String, String> map = redissonClient.getMap(appId + Constants.RedisConstants.USER_SESSION_CONSTANTS + userId);
-        String session = map.get(clientType.toString());
+        String session = map.get(clientType.toString() + ":" + imei);
         if (!StringUtils.isBlank(session)) {
             UserSession userSession = JSON.parseObject(session, UserSession.class);
             userSession.setConnectState(ImConnectStatus.OFFLINE_STATUS.getCode());

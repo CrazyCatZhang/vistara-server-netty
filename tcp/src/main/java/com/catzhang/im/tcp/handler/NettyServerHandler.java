@@ -79,6 +79,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             topic.publish(JSONObject.toJSONString(userClientDto));
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) {
+            logger.info("用户已登出.........");
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());

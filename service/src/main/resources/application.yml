@@ -49,7 +49,7 @@ appConfig:
   privateKey: 123456
   zkAddr: 127.0.0.1:2181 # zk连接地址
   zkConnectTimeOut: 50000 #zk超时时间
-  imRouteWay: 1 # 路由策略1轮训 2随机 3hash
+  imRouteWay: 3 # 路由策略1随机 2轮询 3hash
   consistentHashWay: 1 # 如果选用一致性hash的话具体hash算法 1 TreeMap 2 自定义Map
   tcpPort: 9000 # tcp端口
   webSocketPort: 19000 # webSocket端口
