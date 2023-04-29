@@ -1,7 +1,11 @@
 package com.catzhang.im.service.message.service;
 
+import com.alibaba.fastjson.JSONObject;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.DelFlag;
 import com.catzhang.im.common.model.message.GroupMessageContent;
+import com.catzhang.im.common.model.message.HandleStoreP2PMessageDto;
+import com.catzhang.im.common.model.message.MessageBody;
 import com.catzhang.im.common.model.message.MessageContent;
 import com.catzhang.im.service.group.dao.GroupMessageHistoryEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMessageHistoryMapper;
@@ -10,6 +14,7 @@ import com.catzhang.im.service.message.dao.MessageHistoryEntity;
 import com.catzhang.im.service.message.dao.mapper.MessageBodyMapper;
 import com.catzhang.im.service.message.dao.mapper.MessageHistoryMapper;
 import com.catzhang.im.service.utils.SnowflakeIdWorker;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,18 +41,23 @@ public class MessageStoreService {
     @Autowired
     GroupMessageHistoryMapper groupMessageHistoryMapper;
 
+    @Autowired
+    RabbitTemplate rabbitTemplate;
+
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
 
-        MessageBodyEntity messageBody = extractMessageBody(messageContent);
-        messageBodyMapper.insert(messageBody);
-        List<MessageHistoryEntity> messageHistoryEntities = extractP2PMessageHistory(messageContent, messageBody);
-        messageHistoryMapper.insertBatchSomeColumn(messageHistoryEntities);
+        MessageBody messageBody = extractMessageBody(messageContent);
+        HandleStoreP2PMessageDto handleStoreP2PMessageDto = new HandleStoreP2PMessageDto();
+        handleStoreP2PMessageDto.setMessageContent(messageContent);
+        handleStoreP2PMessageDto.setMessageBody(messageBody);
         messageContent.setMessageKey(messageBody.getMessageKey());
+        rabbitTemplate.convertAndSend(Constants.RabbitConstants.STOREPTOPMESSAGE, "", JSONObject.toJSONString(handleStoreP2PMessageDto));
+
     }
 
-    public MessageBodyEntity extractMessageBody(MessageContent messageContent) {
-        MessageBodyEntity messageBody = new MessageBodyEntity();
+    public MessageBody extractMessageBody(MessageContent messageContent) {
+        MessageBody messageBody = new MessageBody();
         messageBody.setAppId(messageContent.getAppId());
 //        messageBody.setMessageKey(SnowflakeIdWorker.nextId());
         messageBody.setCreateTime(System.currentTimeMillis());
@@ -81,11 +91,11 @@ public class MessageStoreService {
 
     @Transactional
     public void storeGroupMessage(GroupMessageContent messageContent) {
-        MessageBodyEntity messageBody = extractMessageBody(messageContent);
-        messageBodyMapper.insert(messageBody);
-        GroupMessageHistoryEntity groupMessageHistoryEntity = extractGroupMessageHistory(messageContent, messageBody);
-        groupMessageHistoryMapper.insert(groupMessageHistoryEntity);
-        messageContent.setMessageKey(messageBody.getMessageKey());
+//        MessageBodyEntity messageBody = extractMessageBody(messageContent);
+//        messageBodyMapper.insert(messageBody);
+//        GroupMessageHistoryEntity groupMessageHistoryEntity = extractGroupMessageHistory(messageContent, messageBody);
+//        groupMessageHistoryMapper.insert(groupMessageHistoryEntity);
+//        messageContent.setMessageKey(messageBody.getMessageKey());
     }
 
     private GroupMessageHistoryEntity extractGroupMessageHistory(GroupMessageContent

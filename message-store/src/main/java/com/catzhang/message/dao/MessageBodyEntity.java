@@ -1,18 +1,23 @@
-package com.catzhang.im.common.model.message;
+package com.catzhang.message.dao;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
+
 
 /**
  * @author crazycatzhang
  */
 @Data
-public class MessageBody {
+@TableName("im_message_body")
+public class MessageBodyEntity {
 
     private Integer appId;
 
     /**
      * messageBodyId
      */
+    @TableId(value = "message_key")
     private Long messageKey;
 
     /**
