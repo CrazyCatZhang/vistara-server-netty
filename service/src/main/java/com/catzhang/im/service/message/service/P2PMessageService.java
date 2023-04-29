@@ -13,6 +13,12 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * @author crazycatzhang
  */
@@ -28,6 +34,22 @@ public class P2PMessageService {
     @Autowired
     MessageStoreService messageStoreService;
 
+    private final ThreadPoolExecutor threadPoolExecutor;
+
+    {
+        final AtomicInteger num = new AtomicInteger(0);
+        threadPoolExecutor = new ThreadPoolExecutor(8, 8, 60, TimeUnit.SECONDS,
+                new LinkedBlockingDeque<>(1000), new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r);
+                thread.setDaemon(true);
+                thread.setName("message-process-thread-" + num.getAndIncrement());
+                return thread;
+            }
+        });
+    }
+
     private static Logger logger = LoggerFactory.getLogger(P2PMessageService.class);
 
     public void process(MessageContent messageContent) {
@@ -38,10 +60,12 @@ public class P2PMessageService {
         Integer appId = messageContent.getAppId();
         ResponseVO responseVO = verifyImServerPermission(fromId, toId, appId);
         if (responseVO.isOk()) {
-            messageStoreService.storeP2PMessage(messageContent);
-            ack(messageContent, responseVO);
-            syncToSender(messageContent);
-            dispatchMessage(messageContent);
+            threadPoolExecutor.execute(() -> {
+                messageStoreService.storeP2PMessage(messageContent);
+                ack(messageContent, responseVO);
+                syncToSender(messageContent);
+                dispatchMessage(messageContent);
+            });
         } else {
             ack(messageContent, responseVO);
         }
