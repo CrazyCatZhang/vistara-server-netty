@@ -29,6 +29,8 @@ public class HeartBeatHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
+
+        logger.info("进入了心跳处理Handler！！！！！！！！");
         // 判断evt是否是IdleStateEvent（用于触发用户事件，包含 读空闲/写空闲/读写空闲 ）
         if (evt instanceof IdleStateEvent) {
             IdleStateEvent event = (IdleStateEvent) evt;        // 强制类型转换

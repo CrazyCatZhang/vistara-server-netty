@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.model.message.MessageContent;
+import com.catzhang.im.common.model.message.MessageReceiveAckContent;
+import com.catzhang.im.service.message.service.MessageSyncService;
 import com.catzhang.im.service.message.service.P2PMessageService;
 import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
@@ -33,6 +35,9 @@ public class ChatOperateReceiver {
     @Autowired
     P2PMessageService p2PMessageService;
 
+    @Autowired
+    MessageSyncService messageSyncService;
+
     private static Logger logger = LoggerFactory.getLogger(ChatOperateReceiver.class);
 
     @RabbitListener(
@@ -54,6 +59,9 @@ public class ChatOperateReceiver {
             if (command.equals(MessageCommand.MSG_P2P.getCommand())) {
                 MessageContent messageContent = jsonObject.toJavaObject(MessageContent.class);
                 p2PMessageService.process(messageContent);
+            } else if (command.equals(MessageCommand.MSG_RECEIVE_ACK.getCommand())) {
+                MessageReceiveAckContent messageContent = jsonObject.toJavaObject(MessageReceiveAckContent.class);
+                messageSyncService.receiveMark(messageContent);
             }
 
             channel.basicAck(deliveryTag, false);

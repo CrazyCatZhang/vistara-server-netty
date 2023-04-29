@@ -1,8 +1,10 @@
 package com.catzhang.im.service.message.service;
 
 import com.catzhang.im.codec.pack.message.ChatMessageAck;
+import com.catzhang.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.enums.command.MessageCommand;
+import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.common.model.message.MessageContent;
 import com.catzhang.im.service.message.model.req.SendMessageReq;
 import com.catzhang.im.service.message.model.resp.SendMessageResp;
@@ -13,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -64,7 +67,10 @@ public class P2PMessageService {
             messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
-            dispatchMessage(messageContent);
+            List<ClientInfo> clientInfos = dispatchMessage(messageContent);
+            if (clientInfos.isEmpty()) {
+                receiverAck(messageContent);
+            }
         });
 //        } else {
 //            ack(messageContent, responseVO);
@@ -80,12 +86,25 @@ public class P2PMessageService {
         messageProducer.sendToUser(messageContent.getFromId(), MessageCommand.MSG_ACK, responseVO, messageContent);
     }
 
+    public void receiverAck(MessageContent messageContent) {
+        MessageReceiveServerAckPack pack = new MessageReceiveServerAckPack();
+        pack.setFromId(messageContent.getToId());
+        pack.setToId(messageContent.getFromId());
+        pack.setMessageKey(messageContent.getMessageKey());
+        pack.setMessageSequence(messageContent.getMessageSequence());
+        pack.setServerSend(true);
+        messageProducer.sendToUser(messageContent.getFromId(), MessageCommand.MSG_RECEIVE_ACK,
+                pack, new ClientInfo(messageContent.getAppId(), messageContent.getClientType()
+                        , messageContent.getImei()));
+    }
+
     private void syncToSender(MessageContent messageContent) {
         messageProducer.sendToUserExceptClient(messageContent.getFromId(), MessageCommand.MSG_P2P, messageContent, messageContent);
     }
 
-    private void dispatchMessage(MessageContent messageContent) {
-        messageProducer.sendToUser(messageContent.getToId(), MessageCommand.MSG_P2P, messageContent, messageContent.getAppId());
+    private List<ClientInfo> dispatchMessage(MessageContent messageContent) {
+        List<ClientInfo> clientInfos = messageProducer.sendToUser(messageContent.getToId(), MessageCommand.MSG_P2P, messageContent, messageContent.getAppId());
+        return clientInfos;
     }
 
     public ResponseVO verifyImServerPermission(String fromId, String toId, Integer appId) {
