@@ -58,17 +58,17 @@ public class P2PMessageService {
         String fromId = messageContent.getFromId();
         String toId = messageContent.getToId();
         Integer appId = messageContent.getAppId();
-        ResponseVO responseVO = verifyImServerPermission(fromId, toId, appId);
-        if (responseVO.isOk()) {
-            threadPoolExecutor.execute(() -> {
-                messageStoreService.storeP2PMessage(messageContent);
-                ack(messageContent, responseVO);
-                syncToSender(messageContent);
-                dispatchMessage(messageContent);
-            });
-        } else {
-            ack(messageContent, responseVO);
-        }
+//        ResponseVO responseVO = verifyImServerPermission(fromId, toId, appId);
+//        if (responseVO.isOk()) {
+        threadPoolExecutor.execute(() -> {
+            messageStoreService.storeP2PMessage(messageContent);
+            ack(messageContent, ResponseVO.successResponse());
+            syncToSender(messageContent);
+            dispatchMessage(messageContent);
+        });
+//        } else {
+//            ack(messageContent, responseVO);
+//        }
 
     }
 

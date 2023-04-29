@@ -4,15 +4,25 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.catzhang.im.codec.pack.LoginPack;
+import com.catzhang.im.codec.pack.message.ChatMessageAck;
 import com.catzhang.im.codec.proto.Message;
+import com.catzhang.im.codec.proto.MessagePack;
+import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.ImConnectStatus;
+import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.enums.command.SystemCommand;
 import com.catzhang.im.common.model.UserClientDto;
 import com.catzhang.im.common.model.UserSession;
+import com.catzhang.im.common.model.message.VerifySendMessageReq;
+import com.catzhang.im.tcp.feign.FeignMessageService;
 import com.catzhang.im.tcp.publish.MessageProducer;
 import com.catzhang.im.tcp.redis.RedisManager;
 import com.catzhang.im.tcp.utils.SessionSocketHolder;
+import feign.Feign;
+import feign.Request;
+import feign.jackson.JacksonDecoder;
+import feign.jackson.JacksonEncoder;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -34,6 +44,17 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
     private final static Logger logger = LoggerFactory.getLogger(NettyServerHandler.class);
 
     private Integer brokerId;
+
+    private FeignMessageService feignMessageService;
+
+    public NettyServerHandler(Integer brokerId, String logicUrl) {
+        this.brokerId = brokerId;
+        this.feignMessageService = Feign.builder()
+                .encoder(new JacksonEncoder())
+                .decoder(new JacksonDecoder())
+                .options(new Request.Options(1000, 3500))//设置超时时间
+                .target(FeignMessageService.class, logicUrl);
+    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, Message message) throws Exception {
@@ -83,6 +104,24 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());
+        } else if (command == MessageCommand.MSG_P2P.getCommand()) {
+            VerifySendMessageReq verifySendMessageReq = new VerifySendMessageReq();
+            verifySendMessageReq.setCommand(message.getMessageHeader().getCommand());
+            verifySendMessageReq.setAppId(message.getMessageHeader().getAppId());
+            JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
+            verifySendMessageReq.setFromId(jsonObject.getString("fromId"));
+            verifySendMessageReq.setToId(jsonObject.getString("toId"));
+            ResponseVO responseVO = feignMessageService.verifySendMessage(verifySendMessageReq);
+            if (responseVO.isOk()) {
+                MessageProducer.sendMessage(message, command);
+            } else {
+                ChatMessageAck messageId = new ChatMessageAck(jsonObject.getString("messageId"));
+                responseVO.setData(messageId);
+                MessagePack<ResponseVO> ack = new MessagePack<>();
+                ack.setData(responseVO);
+                ack.setCommand(command);
+                channelHandlerContext.channel().writeAndFlush(ack);
+            }
         } else {
             MessageProducer.sendMessage(message, command);
         }
