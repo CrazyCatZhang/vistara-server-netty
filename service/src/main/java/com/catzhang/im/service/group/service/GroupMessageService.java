@@ -62,20 +62,12 @@ public class GroupMessageService {
     public void process(GroupMessageContent messageContent) {
 
         logger.info("消息开始处理：{}", messageContent.getMessageId());
-        String fromId = messageContent.getFromId();
-        String groupId = messageContent.getGroupId();
-        Integer appId = messageContent.getAppId();
-        ResponseVO responseVO = verifyImServerPermission(fromId, groupId, appId);
-        if (responseVO.isOk()) {
-            threadPoolExecutor.execute(() -> {
-                messageStoreService.storeGroupMessage(messageContent);
-                ack(messageContent, responseVO);
-                syncToSender(messageContent);
-                dispatchMessage(messageContent);
-            });
-        } else {
-            ack(messageContent, responseVO);
-        }
+        threadPoolExecutor.execute(() -> {
+            messageStoreService.storeGroupMessage(messageContent);
+            ack(messageContent, ResponseVO.successResponse());
+            syncToSender(messageContent);
+            dispatchMessage(messageContent);
+        });
 
     }
 

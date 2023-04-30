@@ -10,6 +10,7 @@ import com.catzhang.im.codec.proto.MessagePack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.ImConnectStatus;
+import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.enums.command.SystemCommand;
 import com.catzhang.im.common.model.UserClientDto;
@@ -104,23 +105,41 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());
-        } else if (command == MessageCommand.MSG_P2P.getCommand()) {
-            VerifySendMessageReq verifySendMessageReq = new VerifySendMessageReq();
-            verifySendMessageReq.setCommand(message.getMessageHeader().getCommand());
-            verifySendMessageReq.setAppId(message.getMessageHeader().getAppId());
-            JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
-            verifySendMessageReq.setFromId(jsonObject.getString("fromId"));
-            verifySendMessageReq.setToId(jsonObject.getString("toId"));
-            ResponseVO responseVO = feignMessageService.verifySendMessage(verifySendMessageReq);
-            if (responseVO.isOk()) {
-                MessageProducer.sendMessage(message, command);
-            } else {
-                ChatMessageAck messageId = new ChatMessageAck(jsonObject.getString("messageId"));
-                responseVO.setData(messageId);
-                MessagePack<ResponseVO> ack = new MessagePack<>();
-                ack.setData(responseVO);
-                ack.setCommand(command);
-                channelHandlerContext.channel().writeAndFlush(ack);
+        } else if (command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand()) {
+            try {
+                String toId = "";
+                VerifySendMessageReq verifySendMessageReq = new VerifySendMessageReq();
+                verifySendMessageReq.setCommand(message.getMessageHeader().getCommand());
+                verifySendMessageReq.setAppId(message.getMessageHeader().getAppId());
+                JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
+                verifySendMessageReq.setFromId(jsonObject.getString("fromId"));
+                if (command == MessageCommand.MSG_P2P.getCommand()) {
+                    toId = jsonObject.getString("toId");
+                } else {
+                    toId = jsonObject.getString("groupId");
+                }
+                verifySendMessageReq.setToId(toId);
+                ResponseVO responseVO = feignMessageService.verifySendMessage(verifySendMessageReq);
+                if (responseVO.isOk()) {
+                    MessageProducer.sendMessage(message, command);
+                } else {
+
+                    Integer ackCommand;
+                    if (command == MessageCommand.MSG_P2P.getCommand()) {
+                        ackCommand = MessageCommand.MSG_ACK.getCommand();
+                    } else {
+                        ackCommand = GroupEventCommand.GROUP_MSG_ACK.getCommand();
+                    }
+
+                    ChatMessageAck messageId = new ChatMessageAck(jsonObject.getString("messageId"));
+                    responseVO.setData(messageId);
+                    MessagePack<ResponseVO> ack = new MessagePack<>();
+                    ack.setData(responseVO);
+                    ack.setCommand(ackCommand);
+                    channelHandlerContext.channel().writeAndFlush(ack);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         } else {
             MessageProducer.sendMessage(message, command);
