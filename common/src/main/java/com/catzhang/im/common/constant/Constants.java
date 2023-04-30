@@ -52,6 +52,11 @@ public class Constants {
 
         public static final String OFFLINEMESSAGE = "offlineMessage";
 
+        /**
+         * seq 前缀
+         */
+        public static final String SEQUENCEPREFIX = "sequence";
+
     }
 
     public static class RabbitConstants {

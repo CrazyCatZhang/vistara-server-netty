@@ -21,6 +21,7 @@ import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
 import com.catzhang.im.service.friendship.service.FriendShipRequestService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
+import com.catzhang.im.service.sequence.RedisSequence;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.req.GetUserInfoReq;
@@ -29,6 +30,7 @@ import com.catzhang.im.service.user.model.resp.GetUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.CallbackService;
 import com.catzhang.im.service.utils.MessageProducer;
+import com.catzhang.im.service.utils.WriteUserSequence;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,12 @@ public class FriendShipServiceImpl implements FriendShipService {
 
     @Autowired
     FriendShipGroupService friendShipGroupService;
+
+    @Autowired
+    RedisSequence redisSequence;
+
+    @Autowired
+    WriteUserSequence writeUserSequence;
 
     @Override
     public ResponseVO<ImportFriendShipResp> importFriendShip(ImportFriendShipReq req) {
@@ -196,8 +204,12 @@ public class FriendShipServiceImpl implements FriendShipService {
                 .eq(FriendShipEntity::getFromId, req.getFromId())
                 .eq(FriendShipEntity::getToId, req.getToItem().getToId());
         FriendShipEntity fromItem = friendShipMapper.selectOne(fromLambdaQueryWrapper);
+        long sequence;
+
         if (fromItem == null) {
             fromItem = new FriendShipEntity();
+            sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+            fromItem.setFriendSequence(sequence);
             fromItem.setAppId(req.getAppId());
             fromItem.setFromId(req.getFromId());
             BeanUtils.copyProperties(req.getToItem(), fromItem);
@@ -208,6 +220,7 @@ public class FriendShipServiceImpl implements FriendShipService {
             if (insert != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
             }
+            writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
         } else {
             if (fromItem.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_YOUR_FRIEND);
@@ -222,11 +235,14 @@ public class FriendShipServiceImpl implements FriendShipService {
                 if (StringUtils.isNotBlank(toItem.getExtra())) {
                     fromItem.setExtra(toItem.getExtra());
                 }
+                sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+                fromItem.setFriendSequence(sequence);
                 fromItem.setStatus(FriendShipStatus.FRIEND_STATUS_NORMAL.getCode());
                 int update = friendShipMapper.update(fromItem, fromLambdaQueryWrapper);
                 if (update != 1) {
                     return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
                 }
+                writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
             }
         }
 
@@ -251,6 +267,8 @@ public class FriendShipServiceImpl implements FriendShipService {
         FriendShipEntity toItem = friendShipMapper.selectOne(toLambdaQueryWrapper);
         if (toItem == null) {
             toItem = new FriendShipEntity();
+            sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+            toItem.setFriendSequence(sequence);
             toItem.setAppId(req.getAppId());
             toItem.setFromId(req.getToItem().getToId());
             toItem.setToId(req.getFromId());
@@ -266,13 +284,17 @@ public class FriendShipServiceImpl implements FriendShipService {
             if (inset != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
             }
+            writeUserSequence.writeUserSequence(req.getAppId(), req.getToItem().getToId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
         } else {
             if (isApprovedFriendRequest.get() && toItem.getStatus() != FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
                 toItem.setStatus(FriendShipStatus.FRIEND_STATUS_NORMAL.getCode());
+                sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+                toItem.setFriendSequence(sequence);
                 int update = friendShipMapper.update(toItem, toLambdaQueryWrapper);
                 if (update != 1) {
                     return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
                 }
+                writeUserSequence.writeUserSequence(req.getAppId(), req.getToItem().getToId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
             }
         }
         List<FriendShipEntity> friendShipEntities = new ArrayList<>();
@@ -283,12 +305,14 @@ public class FriendShipServiceImpl implements FriendShipService {
         //TODO: 添加好友消息通知
         AddFriendPack addFriendPack = new AddFriendPack();
         BeanUtils.copyProperties(fromItem, addFriendPack);
+        addFriendPack.setSequence(sequence);
         messageProducer.sendToUser(fromItem.getFromId(), req.getClientType(),
                 req.getImei(), FriendshipEventCommand.FRIEND_ADD, addFriendPack
                 , req.getAppId());
 
         AddFriendPack addFriendToPack = new AddFriendPack();
         BeanUtils.copyProperties(toItem, addFriendPack);
+        addFriendToPack.setSequence(sequence);
         messageProducer.sendToUser(toItem.getFromId(),
                 FriendshipEventCommand.FRIEND_ADD, addFriendToPack
                 , req.getAppId());
@@ -337,13 +361,17 @@ public class FriendShipServiceImpl implements FriendShipService {
     @Override
     @Transactional
     public ResponseVO<HandleUpdateFriendShipResp> handleUpdateFriendShip(HandleUpdateFriendShipReq req) {
+
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+
         LambdaUpdateWrapper<FriendShipEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.eq(FriendShipEntity::getAppId, req.getAppId())
                 .eq(FriendShipEntity::getFromId, req.getFromId())
                 .eq(FriendShipEntity::getToId, req.getToItem().getToId())
                 .set(FriendShipEntity::getAddSource, req.getToItem().getAddSource())
                 .set(FriendShipEntity::getExtra, req.getToItem().getExtra())
-                .set(FriendShipEntity::getRemark, req.getToItem().getRemark());
+                .set(FriendShipEntity::getRemark, req.getToItem().getRemark())
+                .set(FriendShipEntity::getFriendSequence, sequence);
         int update = friendShipMapper.update(null, lambdaUpdateWrapper);
         if (update == 1) {
             LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -353,6 +381,7 @@ public class FriendShipServiceImpl implements FriendShipService {
             FriendShipEntity friendShipEntity = friendShipMapper.selectOne(lambdaQueryWrapper);
             HandleUpdateFriendShipResp handleUpdateFriendShipResp = new HandleUpdateFriendShipResp();
             handleUpdateFriendShipResp.setFriendShipEntity(friendShipEntity);
+            writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
 
             //TODO: 更新好友信息通知
             UpdateFriendPack updateFriendPack = new UpdateFriendPack();
@@ -389,8 +418,12 @@ public class FriendShipServiceImpl implements FriendShipService {
             return ResponseVO.errorResponse(FriendShipErrorCode.TO_IS_NOT_YOUR_FRIEND);
         } else {
             if (friendShipEntity.getStatus() != null && friendShipEntity.getStatus() == FriendShipStatus.FRIEND_STATUS_NORMAL.getCode()) {
+
+                long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+                friendShipEntity.setFriendSequence(sequence);
                 friendShipEntity.setStatus(FriendShipStatus.FRIEND_STATUS_DELETE.getCode());
                 friendShipMapper.update(friendShipEntity, lambdaQueryWrapper);
+                writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
 
                 //TODO: 删除好友之后也应该删除好友分组的对应成员
                 GetAllFriendShipGroupReq getAllFriendShipGroupReq = new GetAllFriendShipGroupReq();
@@ -439,6 +472,7 @@ public class FriendShipServiceImpl implements FriendShipService {
                 DeleteFriendPack deleteFriendPack = new DeleteFriendPack();
                 deleteFriendPack.setFromId(req.getFromId());
                 deleteFriendPack.setToId(req.getToId());
+                deleteFriendPack.setSequence(sequence);
                 messageProducer.sendToUser(req.getFromId(),
                         req.getClientType(), req.getImei(),
                         FriendshipEventCommand.FRIEND_DELETE,
@@ -593,6 +627,8 @@ public class FriendShipServiceImpl implements FriendShipService {
             return ResponseVO.errorResponse(toInfo.getCode(), toInfo.getMsg());
         }
 
+        long sequence;
+
         LambdaQueryWrapper<FriendShipEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(FriendShipEntity::getAppId, req.getAppId())
                 .eq(FriendShipEntity::getFromId, req.getFromId())
@@ -600,6 +636,8 @@ public class FriendShipServiceImpl implements FriendShipService {
         FriendShipEntity fromItem = friendShipMapper.selectOne(lambdaQueryWrapper);
         if (fromItem == null) {
             fromItem = new FriendShipEntity();
+            sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+            fromItem.setFriendSequence(sequence);
             fromItem.setFromId(req.getFromId());
             fromItem.setToId(req.getToId());
             fromItem.setAppId(req.getAppId());
@@ -610,15 +648,19 @@ public class FriendShipServiceImpl implements FriendShipService {
             if (insert != 1) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.ADD_FRIEND_ERROR);
             }
+            writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
         } else {
             if (fromItem.getBlack() != null && fromItem.getBlack() == FriendShipStatus.BLACK_STATUS_BLACKED.getCode()) {
                 return ResponseVO.errorResponse(FriendShipErrorCode.FRIEND_IS_BLACK);
             } else {
+                sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+                fromItem.setFriendSequence(sequence);
                 fromItem.setBlack(FriendShipStatus.BLACK_STATUS_BLACKED.getCode());
                 int update = friendShipMapper.update(fromItem, lambdaQueryWrapper);
                 if (update != 1) {
                     return ResponseVO.errorResponse(FriendShipErrorCode.ADD_BLACK_ERROR);
                 }
+                writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
             }
         }
 
@@ -629,6 +671,7 @@ public class FriendShipServiceImpl implements FriendShipService {
         AddFriendBlackPack addFriendBlackPack = new AddFriendBlackPack();
         addFriendBlackPack.setFromId(req.getFromId());
         addFriendBlackPack.setToId(req.getToId());
+        addFriendBlackPack.setSequence(sequence);
         //发送tcp通知
         messageProducer.sendToUser(req.getFromId(), req.getClientType(), req.getImei(),
                 FriendshipEventCommand.FRIEND_BLACK_ADD, addFriendBlackPack, req.getAppId());
@@ -661,16 +704,21 @@ public class FriendShipServiceImpl implements FriendShipService {
         if (fromItem.getBlack() != null && fromItem.getBlack() == FriendShipStatus.BLACK_STATUS_NORMAL.getCode()) {
             throw new ApplicationException(FriendShipErrorCode.FRIEND_IS_NOT_YOUR_BLACK);
         }
+
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIP);
+        fromItem.setFriendSequence(sequence);
         fromItem.setBlack(FriendShipStatus.BLACK_STATUS_NORMAL.getCode());
         int update = friendShipMapper.update(fromItem, lambdaQueryWrapper);
         if (update != 1) {
             return ResponseVO.errorResponse();
         }
+        writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIP, sequence);
 
         //TODO: 删除黑名单消息通知
         DeleteBlackPack deleteFriendPack = new DeleteBlackPack();
         deleteFriendPack.setFromId(req.getFromId());
         deleteFriendPack.setToId(req.getToId());
+        deleteFriendPack.setSequence(sequence);
         messageProducer.sendToUser(req.getFromId(), req.getClientType(), req.getImei(), FriendshipEventCommand.FRIEND_BLACK_DELETE,
                 deleteFriendPack, req.getAppId());
 
