@@ -40,7 +40,17 @@ public class Constants {
         public static final String USERLOGINCHANNEL
                 = "signal/channel/LOGIN_USER_INNER_QUEUE";
 
+        /**
+         * 用户session，appId + UserSessionConstants + 用户id 例如10000：userSession：CatZhang
+         */
         public static final String USER_SESSION_CONSTANTS = ":userSession:";
+
+        /**
+         * 缓存客户端消息防重，格式： appId + :cacheMessage: + messageId
+         */
+        public static final String CACHEMESSAGE = "cacheMessage";
+
+        public static final String OFFLINEMESSAGE = "offlineMessage";
 
     }
 

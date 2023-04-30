@@ -14,14 +14,17 @@ import com.catzhang.im.service.message.dao.MessageHistoryEntity;
 import com.catzhang.im.service.message.dao.mapper.MessageBodyMapper;
 import com.catzhang.im.service.message.dao.mapper.MessageHistoryMapper;
 import com.catzhang.im.service.utils.SnowflakeIdWorker;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author crazycatzhang
@@ -43,6 +46,9 @@ public class MessageStoreService {
 
     @Autowired
     RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public void storeP2PMessage(MessageContent messageContent) {
@@ -106,6 +112,21 @@ public class MessageStoreService {
         result.setMessageKey(messageBodyEntity.getMessageKey());
         result.setCreateTime(System.currentTimeMillis());
         return result;
+    }
+
+    public void setMessageFromMessageIdCache(MessageContent messageContent) {
+        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageContent.getMessageId();
+        stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
+    }
+
+    public <T> T getMessageFromMessageIdCache(MessageContent messageContent, Class<T> clazz) {
+        //appid : cache : messageId
+        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageContent.getMessageId();
+        String msg = stringRedisTemplate.opsForValue().get(key);
+        if (StringUtils.isBlank(msg)) {
+            return null;
+        }
+        return JSONObject.parseObject(msg, clazz);
     }
 
 }

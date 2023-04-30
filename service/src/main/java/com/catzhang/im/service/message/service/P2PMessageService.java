@@ -64,9 +64,23 @@ public class P2PMessageService {
     public void process(MessageContent messageContent) {
 
         logger.info("消息开始处理：{}", messageContent.getMessageId());
-        String fromId = messageContent.getFromId();
-        String toId = messageContent.getToId();
-        Integer appId = messageContent.getAppId();
+
+        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent, MessageContent.class);
+        if (messageFromMessageIdCache != null) {
+            logger.info("{}", messageFromMessageIdCache.getMessageSequence());
+            threadPoolExecutor.execute(() -> {
+                ack(messageFromMessageIdCache, ResponseVO.successResponse());
+                //2.发消息给同步在线端
+                syncToSender(messageFromMessageIdCache);
+                //3.发消息给对方在线端
+                List<ClientInfo> clientInfos = dispatchMessage(messageFromMessageIdCache);
+                if (clientInfos.isEmpty()) {
+                    //发送接收确认给发送方，要带上是服务端发送的标识
+                    receiverAck(messageFromMessageIdCache);
+                }
+            });
+            return;
+        }
 
         long sequence = redisSequence.getSequence(messageContent.getAppId() + ":"
                 + Constants.SequenceConstants.MESSAGE + ":" + ConversationIdGenerate.generateP2PId(
@@ -79,6 +93,7 @@ public class P2PMessageService {
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
             List<ClientInfo> clientInfos = dispatchMessage(messageContent);
+            messageStoreService.setMessageFromMessageIdCache(messageContent);
             if (clientInfos.isEmpty()) {
                 receiverAck(messageContent);
             }
