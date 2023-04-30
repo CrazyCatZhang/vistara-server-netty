@@ -1,10 +1,14 @@
 package com.catzhang.message.service;
 
+import com.catzhang.im.common.model.message.GroupMessageContent;
 import com.catzhang.im.common.model.message.MessageContent;
+import com.catzhang.message.dao.GroupMessageHistoryEntity;
 import com.catzhang.message.dao.MessageBodyEntity;
 import com.catzhang.message.dao.MessageHistoryEntity;
+import com.catzhang.message.dao.mapper.GroupMessageHistoryMapper;
 import com.catzhang.message.dao.mapper.MessageBodyMapper;
 import com.catzhang.message.dao.mapper.MessageHistoryMapper;
+import com.catzhang.message.model.HandleStoreGroupMessageDto;
 import com.catzhang.message.model.HandleStoreP2PMessageDto;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +29,9 @@ public class StoreMessageService {
 
     @Autowired
     MessageHistoryMapper messageHistoryMapper;
+
+    @Autowired
+    GroupMessageHistoryMapper groupMessageHistoryMapper;
 
     @Transactional
     public void handleStoreP2PMessage(HandleStoreP2PMessageDto handleStoreP2PMessageDto) {
@@ -55,4 +62,19 @@ public class StoreMessageService {
         return list;
     }
 
+    public void handleStoreGroupMessage(HandleStoreGroupMessageDto handleStoreGroupMessageDto) {
+        messageBodyMapper.insert(handleStoreGroupMessageDto.getMessageBodyEntity());
+        GroupMessageHistoryEntity imGroupMessageHistoryEntity = extractGroupMessageHistory(handleStoreGroupMessageDto.getGroupMessageContent(), handleStoreGroupMessageDto.getMessageBodyEntity());
+        groupMessageHistoryMapper.insert(imGroupMessageHistoryEntity);
+    }
+
+    private GroupMessageHistoryEntity extractGroupMessageHistory(GroupMessageContent
+                                                                         messageContent, MessageBodyEntity messageBodyEntity) {
+        GroupMessageHistoryEntity result = new GroupMessageHistoryEntity();
+        BeanUtils.copyProperties(messageContent, result);
+        result.setGroupId(messageContent.getGroupId());
+        result.setMessageKey(messageBodyEntity.getMessageKey());
+        result.setCreateTime(System.currentTimeMillis());
+        return result;
+    }
 }

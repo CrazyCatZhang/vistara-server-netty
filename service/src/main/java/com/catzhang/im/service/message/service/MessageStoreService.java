@@ -3,10 +3,7 @@ package com.catzhang.im.service.message.service;
 import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.DelFlag;
-import com.catzhang.im.common.model.message.GroupMessageContent;
-import com.catzhang.im.common.model.message.HandleStoreP2PMessageDto;
-import com.catzhang.im.common.model.message.MessageBody;
-import com.catzhang.im.common.model.message.MessageContent;
+import com.catzhang.im.common.model.message.*;
 import com.catzhang.im.service.group.dao.GroupMessageHistoryEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMessageHistoryMapper;
 import com.catzhang.im.service.message.dao.MessageBodyEntity;
@@ -97,11 +94,14 @@ public class MessageStoreService {
 
     @Transactional
     public void storeGroupMessage(GroupMessageContent messageContent) {
-//        MessageBodyEntity messageBody = extractMessageBody(messageContent);
-//        messageBodyMapper.insert(messageBody);
-//        GroupMessageHistoryEntity groupMessageHistoryEntity = extractGroupMessageHistory(messageContent, messageBody);
-//        groupMessageHistoryMapper.insert(groupMessageHistoryEntity);
-//        messageContent.setMessageKey(messageBody.getMessageKey());
+        MessageBody messageBody = extractMessageBody(messageContent);
+        HandleStoreGroupMessageDto handleStoreGroupMessageDto = new HandleStoreGroupMessageDto();
+        handleStoreGroupMessageDto.setGroupMessageContent(messageContent);
+        handleStoreGroupMessageDto.setMessageBody(messageBody);
+        rabbitTemplate.convertAndSend(Constants.RabbitConstants.STOREGROUPMESSAGE,
+                "",
+                JSONObject.toJSONString(handleStoreGroupMessageDto));
+        messageContent.setMessageKey(messageBody.getMessageKey());
     }
 
     private GroupMessageHistoryEntity extractGroupMessageHistory(GroupMessageContent
