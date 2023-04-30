@@ -107,7 +107,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());
         } else if (command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand()) {
             try {
-                String toId = "";
+                String toId;
                 VerifySendMessageReq verifySendMessageReq = new VerifySendMessageReq();
                 verifySendMessageReq.setCommand(message.getMessageHeader().getCommand());
                 verifySendMessageReq.setAppId(message.getMessageHeader().getAppId());

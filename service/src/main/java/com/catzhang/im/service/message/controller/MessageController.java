@@ -1,7 +1,9 @@
 package com.catzhang.im.service.message.controller;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.VerifySendMessageReq;
+import com.catzhang.im.service.group.service.GroupMessageService;
 import com.catzhang.im.service.message.model.req.SendMessageReq;
 import com.catzhang.im.service.message.model.resp.SendMessageResp;
 import com.catzhang.im.service.message.service.P2PMessageService;
@@ -22,6 +24,9 @@ public class MessageController {
     @Autowired
     P2PMessageService p2PMessageService;
 
+    @Autowired
+    GroupMessageService groupMessageService;
+
     @PostMapping("/send")
     public ResponseVO<SendMessageResp> send(@RequestBody @Validated SendMessageReq req) {
         return p2PMessageService.send(req);
@@ -29,6 +34,9 @@ public class MessageController {
 
     @PostMapping("/verifySend")
     public ResponseVO verifySend(@RequestBody @Validated VerifySendMessageReq req) {
+        if (req.getCommand().equals(GroupEventCommand.MSG_GROUP.getCommand())) {
+            return groupMessageService.verifyImServerPermission(req.getFromId(), req.getToId(), req.getAppId());
+        }
         return p2PMessageService.verifyImServerPermission(req.getFromId(), req.getToId(), req.getAppId());
     }
 

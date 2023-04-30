@@ -2,10 +2,13 @@ package com.catzhang.im.service.group.mq;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.GroupMessageContent;
+import com.catzhang.im.common.model.message.MessageReadedContent;
 import com.catzhang.im.service.group.service.GroupMessageService;
+import com.catzhang.im.service.message.service.MessageSyncService;
 import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +36,9 @@ public class GroupChatOperateReceiver {
     @Autowired
     GroupMessageService groupMessageService;
 
+    @Autowired
+    MessageSyncService messageSyncService;
+
     private static Logger logger = LoggerFactory.getLogger(GroupChatOperateReceiver.class);
 
     @RabbitListener(
@@ -54,6 +60,10 @@ public class GroupChatOperateReceiver {
             if (command.equals(GroupEventCommand.MSG_GROUP.getCommand())) {
                 GroupMessageContent groupMessageContent = jsonObject.toJavaObject(GroupMessageContent.class);
                 groupMessageService.process(groupMessageContent);
+            } else if (command.equals(GroupEventCommand.MSG_GROUP_READED.getCommand())) {
+                MessageReadedContent messageReadedContent = JSON.parseObject(msg, new TypeReference<MessageReadedContent>() {
+                }.getType());
+                messageSyncService.groupReadMark(messageReadedContent);
             }
 
             channel.basicAck(deliveryTag, false);

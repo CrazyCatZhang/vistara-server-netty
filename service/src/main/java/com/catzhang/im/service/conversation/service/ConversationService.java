@@ -1,6 +1,7 @@
 package com.catzhang.im.service.conversation.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.catzhang.im.common.enums.ConversationType;
 import com.catzhang.im.common.model.message.MessageReadedContent;
 import com.catzhang.im.service.conversation.dao.ConversationSetEntity;
 import com.catzhang.im.service.conversation.dao.mapper.ConversationSetMapper;
@@ -22,7 +23,13 @@ public class ConversationService {
     }
 
     public void messageMarkRead(MessageReadedContent messageReadedContent) {
-        String conversationId = convertConversationId(messageReadedContent.getConversationType(), messageReadedContent.getFromId(), messageReadedContent.getToId());
+
+        String toId = messageReadedContent.getToId();
+        if (messageReadedContent.getConversationType() == ConversationType.GROUP.getCode()) {
+            toId = messageReadedContent.getGroupId();
+        }
+
+        String conversationId = convertConversationId(messageReadedContent.getConversationType(), messageReadedContent.getFromId(), toId);
         QueryWrapper<ConversationSetEntity> query = new QueryWrapper<>();
         query.eq("conversation_id", conversationId);
         query.eq("app_id", messageReadedContent.getAppId());
