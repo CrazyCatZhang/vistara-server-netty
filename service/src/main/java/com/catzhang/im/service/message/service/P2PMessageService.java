@@ -4,9 +4,11 @@ import com.catzhang.im.codec.pack.message.ChatMessageAck;
 import com.catzhang.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
+import com.catzhang.im.common.enums.ConversationType;
 import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.common.model.message.MessageContent;
+import com.catzhang.im.common.model.message.OfflineMessageContent;
 import com.catzhang.im.service.message.model.req.SendMessageReq;
 import com.catzhang.im.service.message.model.resp.SendMessageResp;
 import com.catzhang.im.service.sequence.RedisSequence;
@@ -90,6 +92,10 @@ public class P2PMessageService {
 
         threadPoolExecutor.execute(() -> {
             messageStoreService.storeP2PMessage(messageContent);
+            OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+            BeanUtils.copyProperties(messageContent, offlineMessageContent);
+            offlineMessageContent.setConversationType(ConversationType.P2P.getCode());;
+            messageStoreService.storeOfflineMessage(offlineMessageContent);
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
             List<ClientInfo> clientInfos = dispatchMessage(messageContent);

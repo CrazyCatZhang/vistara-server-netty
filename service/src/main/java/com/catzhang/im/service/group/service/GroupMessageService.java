@@ -5,6 +5,7 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.GroupMessageContent;
+import com.catzhang.im.common.model.message.OfflineMessageContent;
 import com.catzhang.im.service.group.model.req.GetGroupMemberIdReq;
 import com.catzhang.im.service.group.model.req.SendGroupMessageReq;
 import com.catzhang.im.service.group.model.resp.SendGroupMessageResp;
@@ -87,6 +88,18 @@ public class GroupMessageService {
 
         threadPoolExecutor.execute(() -> {
             messageStoreService.storeGroupMessage(messageContent);
+
+            GetGroupMemberIdReq getGroupMemberIdReq = new GetGroupMemberIdReq();
+            getGroupMemberIdReq.setGroupId(messageContent.getGroupId());
+            getGroupMemberIdReq.setAppId(messageContent.getAppId());
+            List<String> groupMemberId = groupMemberService.getGroupMemberId(getGroupMemberIdReq);
+            messageContent.setMemberId(groupMemberId);
+
+            OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
+            BeanUtils.copyProperties(messageContent, offlineMessageContent);
+            offlineMessageContent.setToId(messageContent.getGroupId());
+            messageStoreService.storeGroupOfflineMessage(offlineMessageContent, groupMemberId);
+
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
             dispatchMessage(messageContent);
@@ -110,12 +123,7 @@ public class GroupMessageService {
 
     private void dispatchMessage(GroupMessageContent messageContent) {
 
-        GetGroupMemberIdReq getGroupMemberIdReq = new GetGroupMemberIdReq();
-        getGroupMemberIdReq.setGroupId(messageContent.getGroupId());
-        getGroupMemberIdReq.setAppId(messageContent.getAppId());
-        List<String> groupMemberId = groupMemberService.getGroupMemberId(getGroupMemberIdReq);
-
-        for (String memberId : groupMemberId) {
+        for (String memberId : messageContent.getMemberId()) {
             if (!memberId.equals(messageContent.getFromId())) {
                 messageProducer.sendToUser(memberId,
                         GroupEventCommand.MSG_GROUP,

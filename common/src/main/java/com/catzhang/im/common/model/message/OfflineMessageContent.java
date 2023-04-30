@@ -1,6 +1,5 @@
-package com.catzhang.message.dao;
+package com.catzhang.im.common.model.message;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 
@@ -8,8 +7,7 @@ import lombok.Data;
  * @author crazycatzhang
  */
 @Data
-@TableName("im_message_body")
-public class MessageBodyEntity {
+public class OfflineMessageContent {
 
     private Integer appId;
 
@@ -23,14 +21,25 @@ public class MessageBodyEntity {
      */
     private String messageBody;
 
-    private String securityKey;
-
     private Long messageTime;
-
-    private Long createTime;
 
     private String extra;
 
     private Integer delFlag;
+
+    private String fromId;
+
+    private String toId;
+
+    /**
+     * 序列号
+     */
+    private Long messageSequence;
+
+    private String messageRandom;
+
+    private Integer conversationType;
+
+    private String conversationId;
 
 }
