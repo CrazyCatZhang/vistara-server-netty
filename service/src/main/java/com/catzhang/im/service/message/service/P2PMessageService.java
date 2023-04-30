@@ -65,7 +65,7 @@ public class P2PMessageService {
 
         logger.info("消息开始处理：{}", messageContent.getMessageId());
 
-        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent, MessageContent.class);
+        MessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), MessageContent.class);
         if (messageFromMessageIdCache != null) {
             logger.info("{}", messageFromMessageIdCache.getMessageSequence());
             threadPoolExecutor.execute(() -> {
@@ -93,7 +93,7 @@ public class P2PMessageService {
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
             List<ClientInfo> clientInfos = dispatchMessage(messageContent);
-            messageStoreService.setMessageFromMessageIdCache(messageContent);
+            messageStoreService.setMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), messageContent);
             if (clientInfos.isEmpty()) {
                 receiverAck(messageContent);
             }

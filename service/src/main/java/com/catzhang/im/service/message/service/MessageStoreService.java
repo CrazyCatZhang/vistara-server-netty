@@ -114,14 +114,14 @@ public class MessageStoreService {
         return result;
     }
 
-    public void setMessageFromMessageIdCache(MessageContent messageContent) {
-        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageContent.getMessageId();
+    public void setMessageFromMessageIdCache(Integer appId, String messageId, Object messageContent) {
+        String key = appId + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageId;
         stringRedisTemplate.opsForValue().set(key, JSONObject.toJSONString(messageContent), 300, TimeUnit.SECONDS);
     }
 
-    public <T> T getMessageFromMessageIdCache(MessageContent messageContent, Class<T> clazz) {
+    public <T> T getMessageFromMessageIdCache(Integer appId, String messageId, Class<T> clazz) {
         //appid : cache : messageId
-        String key = messageContent.getAppId() + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageContent.getMessageId();
+        String key = appId + ":" + Constants.RedisConstants.CACHEMESSAGE + ":" + messageId;
         String msg = stringRedisTemplate.opsForValue().get(key);
         if (StringUtils.isBlank(msg)) {
             return null;

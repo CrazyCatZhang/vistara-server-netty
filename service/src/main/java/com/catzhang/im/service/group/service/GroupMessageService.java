@@ -46,6 +46,7 @@ public class GroupMessageService {
     @Autowired
     RedisSequence redisSequence;
 
+
     private static Logger logger = LoggerFactory.getLogger(GroupMessageService.class);
 
     private final ThreadPoolExecutor threadPoolExecutor;
@@ -68,6 +69,18 @@ public class GroupMessageService {
 
         logger.info("消息开始处理：{}", messageContent.getMessageId());
 
+        GroupMessageContent messageFromMessageIdCache = messageStoreService.getMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), GroupMessageContent.class);
+        if (messageFromMessageIdCache != null) {
+            threadPoolExecutor.execute(() -> {
+                //1.回ack成功给自己
+                ack(messageFromMessageIdCache, ResponseVO.successResponse());
+                //2.发消息给同步在线端
+                syncToSender(messageFromMessageIdCache);
+                //3.发消息给对方在线端
+                dispatchMessage(messageFromMessageIdCache);
+            });
+        }
+
         long sequence = redisSequence.getSequence(messageContent.getAppId() + ":" + Constants.SequenceConstants.GROUPMESSAGE
                 + messageContent.getGroupId());
         messageContent.setMessageSequence(sequence);
@@ -77,6 +90,8 @@ public class GroupMessageService {
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
             dispatchMessage(messageContent);
+            messageStoreService.setMessageFromMessageIdCache(messageContent.getAppId(), messageContent.getMessageId(), messageContent);
+
         });
 
     }
@@ -84,7 +99,7 @@ public class GroupMessageService {
     private void ack(GroupMessageContent messageContent, ResponseVO responseVO) {
         logger.info("msg ack,msgId={},checkResult{}", messageContent.getMessageId(), responseVO.getCode());
 
-        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
+        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId(), messageContent.getMessageSequence());
         responseVO.setData(chatMessageAck);
         messageProducer.sendToUser(messageContent.getFromId(), GroupEventCommand.GROUP_MSG_ACK, responseVO, messageContent);
     }
