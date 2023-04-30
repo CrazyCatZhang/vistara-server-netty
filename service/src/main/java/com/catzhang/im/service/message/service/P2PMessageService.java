@@ -3,11 +3,14 @@ package com.catzhang.im.service.message.service;
 import com.catzhang.im.codec.pack.message.ChatMessageAck;
 import com.catzhang.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.common.model.message.MessageContent;
 import com.catzhang.im.service.message.model.req.SendMessageReq;
 import com.catzhang.im.service.message.model.resp.SendMessageResp;
+import com.catzhang.im.service.sequence.RedisSequence;
+import com.catzhang.im.service.utils.ConversationIdGenerate;
 import com.catzhang.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +40,9 @@ public class P2PMessageService {
     @Autowired
     MessageStoreService messageStoreService;
 
+    @Autowired
+    RedisSequence redisSequence;
+
     private final ThreadPoolExecutor threadPoolExecutor;
 
     {
@@ -61,8 +67,13 @@ public class P2PMessageService {
         String fromId = messageContent.getFromId();
         String toId = messageContent.getToId();
         Integer appId = messageContent.getAppId();
-//        ResponseVO responseVO = verifyImServerPermission(fromId, toId, appId);
-//        if (responseVO.isOk()) {
+
+        long sequence = redisSequence.getSequence(messageContent.getAppId() + ":"
+                + Constants.SequenceConstants.MESSAGE + ":" + ConversationIdGenerate.generateP2PId(
+                messageContent.getFromId(), messageContent.getToId()
+        ));
+        messageContent.setMessageSequence(sequence);
+
         threadPoolExecutor.execute(() -> {
             messageStoreService.storeP2PMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
@@ -72,16 +83,13 @@ public class P2PMessageService {
                 receiverAck(messageContent);
             }
         });
-//        } else {
-//            ack(messageContent, responseVO);
-//        }
 
     }
 
     private void ack(MessageContent messageContent, ResponseVO responseVO) {
         logger.info("msg ack,msgId={},checkResult{}", messageContent.getMessageId(), responseVO.getCode());
 
-        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId());
+        ChatMessageAck chatMessageAck = new ChatMessageAck(messageContent.getMessageId(), messageContent.getMessageSequence());
         responseVO.setData(chatMessageAck);
         messageProducer.sendToUser(messageContent.getFromId(), MessageCommand.MSG_ACK, responseVO, messageContent);
     }

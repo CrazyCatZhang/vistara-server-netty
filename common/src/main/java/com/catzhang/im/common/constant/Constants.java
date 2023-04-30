@@ -103,4 +103,24 @@ public class Constants {
 
     }
 
+    public static class SequenceConstants {
+
+        public static final String MESSAGE = "messageSequence";
+
+        public static final String GROUPMESSAGE = "groupMessageSequence";
+
+
+        public static final String FRIENDSHIP = "friendshipSequence";
+
+//        public static final String FriendshipBlack = "friendshipBlackSeq";
+
+        public static final String FRIENDSHIPREQUEST = "friendshipRequestSequence";
+
+        public static final String FRIENDSHIPGROUP = "friendshipGroupSequence";
+
+        public static final String GROUP = "groupSequence";
+
+        public static final String CONVERSATION = "conversationSequence";
+
+    }
 }
