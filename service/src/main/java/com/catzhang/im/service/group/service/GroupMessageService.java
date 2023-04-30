@@ -2,6 +2,7 @@ package com.catzhang.im.service.group.service;
 
 import com.catzhang.im.codec.pack.message.ChatMessageAck;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.model.message.GroupMessageContent;
 import com.catzhang.im.service.group.model.req.GetGroupMemberIdReq;
@@ -9,6 +10,7 @@ import com.catzhang.im.service.group.model.req.SendGroupMessageReq;
 import com.catzhang.im.service.group.model.resp.SendGroupMessageResp;
 import com.catzhang.im.service.message.service.MessageStoreService;
 import com.catzhang.im.service.message.service.VerifySendMessageService;
+import com.catzhang.im.service.sequence.RedisSequence;
 import com.catzhang.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +43,9 @@ public class GroupMessageService {
     @Autowired
     MessageStoreService messageStoreService;
 
+    @Autowired
+    RedisSequence redisSequence;
+
     private static Logger logger = LoggerFactory.getLogger(GroupMessageService.class);
 
     private final ThreadPoolExecutor threadPoolExecutor;
@@ -62,6 +67,11 @@ public class GroupMessageService {
     public void process(GroupMessageContent messageContent) {
 
         logger.info("消息开始处理：{}", messageContent.getMessageId());
+
+        long sequence = redisSequence.getSequence(messageContent.getAppId() + ":" + Constants.SequenceConstants.GROUPMESSAGE
+                + messageContent.getGroupId());
+        messageContent.setMessageSequence(sequence);
+
         threadPoolExecutor.execute(() -> {
             messageStoreService.storeGroupMessage(messageContent);
             ack(messageContent, ResponseVO.successResponse());
