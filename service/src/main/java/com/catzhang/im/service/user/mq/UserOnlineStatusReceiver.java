@@ -40,7 +40,7 @@ public class UserOnlineStatusReceiver {
      */
     @RabbitListener(bindings = @QueueBinding(
             value = @Queue(value = Constants.RabbitConstants.IMTOUSERSERVICE, durable = "true"),
-            exchange = @Exchange(value = Constants.RabbitConstants.IMTOUSERSERVICE, durable = "true")
+            exchange = @Exchange(value = Constants.RabbitConstants.IMTOUSERSERVICE)
     ), concurrency = "1")
     @RabbitHandler
     public void onChatMessage(@Payload Message message,

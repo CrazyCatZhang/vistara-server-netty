@@ -57,6 +57,16 @@ public class Constants {
          */
         public static final String SEQUENCEPREFIX = "sequence";
 
+        /**
+         * 用户订阅列表，格式 ：appId + :subscribe: + userId。Hash结构，filed为订阅自己的人
+         */
+        public static final String SUBSCRIBE = "subscribe";
+
+        /**
+         * 用户自定义在线状态，格式 ：appId + :userCustomerStatus: + userId。set，value为用户id
+         */
+        public static final String USERCUSTOMERSTATUS = "userCustomerStatus";
+
     }
 
     public static class RabbitConstants {

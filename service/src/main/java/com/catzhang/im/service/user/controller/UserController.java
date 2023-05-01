@@ -5,6 +5,7 @@ import com.catzhang.im.common.route.RouteHandle;
 import com.catzhang.im.service.user.model.req.*;
 import com.catzhang.im.service.user.model.resp.*;
 import com.catzhang.im.service.user.service.UserService;
+import com.catzhang.im.service.user.service.UserStatusService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,9 @@ public class UserController {
 
     @Autowired
     RouteHandle routeHandle;
+
+    @Autowired
+    UserStatusService userStatusService;
 
     @PostMapping("import")
     public ResponseVO<ImportUserResp> importUser(@RequestBody ImportUserReq req) {
@@ -57,5 +61,11 @@ public class UserController {
     @PostMapping("getUserSequence")
     public ResponseVO<Map<Object, Object>> getUserSequence(@RequestBody @Validated GetUserSequenceReq req) {
         return userService.getUserSequence(req);
+    }
+
+    @PostMapping("subscribeUserOnlineStatus")
+    public ResponseVO getUserSequence(@RequestBody @Validated SubscribeUserOnlineStatusReq req) {
+        userStatusService.subscribeUserOnlineStatus(req);
+        return ResponseVO.successResponse();
     }
 }
