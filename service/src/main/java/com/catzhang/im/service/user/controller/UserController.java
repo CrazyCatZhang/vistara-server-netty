@@ -58,7 +58,7 @@ public class UserController {
         return userService.login(req);
     }
 
-    @PostMapping("getUserSequence")
+    @GetMapping("getUserSequence")
     public ResponseVO<Map<Object, Object>> getUserSequence(@RequestBody @Validated GetUserSequenceReq req) {
         return userService.getUserSequence(req);
     }
@@ -69,9 +69,23 @@ public class UserController {
         return ResponseVO.successResponse();
     }
 
-    @RequestMapping("setUserCustomerStatus")
+    @PostMapping("setUserCustomerStatus")
     public ResponseVO setUserCustomerStatus(@RequestBody @Validated SetUserCustomerStatusReq req) {
         userStatusService.setUserCustomerStatus(req);
         return ResponseVO.successResponse();
+    }
+
+    @GetMapping("queryFriendOnlineStatus")
+    public ResponseVO<Map<String, UserOnlineStatusResp>> queryFriendOnlineStatus(@RequestBody @Validated
+                                              PullFriendOnlineStatusReq req) {
+
+        return userStatusService.queryFriendOnlineStatus(req);
+    }
+
+    @GetMapping("queryUserOnlineStatus")
+    public ResponseVO<Map<String, UserOnlineStatusResp>> queryUserOnlineStatus(@RequestBody @Validated
+                                            PullUserOnlineStatusReq req) {
+
+        return userStatusService.queryUserOnlineStatus(req);
     }
 }

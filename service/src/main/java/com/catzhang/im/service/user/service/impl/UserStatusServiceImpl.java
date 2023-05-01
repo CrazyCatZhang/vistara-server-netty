@@ -1,8 +1,10 @@
 package com.catzhang.im.service.user.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.codec.pack.user.UserCustomStatusChangeNotifyPack;
 import com.catzhang.im.codec.pack.user.UserStatusChangeNotifyPack;
+import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.command.Command;
 import com.catzhang.im.common.enums.command.UserEventCommand;
@@ -10,19 +12,21 @@ import com.catzhang.im.common.model.ClientInfo;
 import com.catzhang.im.common.model.UserSession;
 import com.catzhang.im.service.friendship.service.FriendShipService;
 import com.catzhang.im.service.user.model.UserStatusChangeNotifyContent;
+import com.catzhang.im.service.user.model.req.PullFriendOnlineStatusReq;
+import com.catzhang.im.service.user.model.req.PullUserOnlineStatusReq;
 import com.catzhang.im.service.user.model.req.SetUserCustomerStatusReq;
 import com.catzhang.im.service.user.model.req.SubscribeUserOnlineStatusReq;
+import com.catzhang.im.service.user.model.resp.UserOnlineStatusResp;
 import com.catzhang.im.service.user.service.UserStatusService;
 import com.catzhang.im.service.utils.MessageProducer;
 import com.catzhang.im.service.utils.UserSessionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author crazycatzhang
@@ -110,5 +114,35 @@ public class UserStatusServiceImpl implements UserStatusService {
         syncSender(userCustomStatusChangeNotifyPack,
                 req.getUserId(), new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
         dispatcher(userCustomStatusChangeNotifyPack, req.getUserId(), req.getAppId(), UserEventCommand.USER_CUSTOM_STATUS_CHANGE_NOTIFY);
+    }
+
+    @Override
+    public ResponseVO<Map<String, UserOnlineStatusResp>> queryFriendOnlineStatus(PullFriendOnlineStatusReq req) {
+        List<String> allFriendId = friendShipService.getAllFriendId(req.getOperator(), req.getAppId());
+        return ResponseVO.successResponse(getUserOnlineStatus(allFriendId, req.getAppId()));
+    }
+
+    @Override
+    public ResponseVO<Map<String, UserOnlineStatusResp>> queryUserOnlineStatus(PullUserOnlineStatusReq req) {
+        return ResponseVO.successResponse(getUserOnlineStatus(req.getUserList(), req.getAppId()));
+    }
+
+    private Map<String, UserOnlineStatusResp> getUserOnlineStatus(List<String> userId, Integer appId) {
+
+        Map<String, UserOnlineStatusResp> result = new HashMap<>(userId.size());
+        for (String uid : userId) {
+            UserOnlineStatusResp resp = new UserOnlineStatusResp();
+            List<UserSession> userSession = userSessionUtils.getUserSession(appId, uid);
+            resp.setSession(userSession);
+            String userKey = appId + ":" + Constants.RedisConstants.USERCUSTOMERSTATUS + ":" + uid;
+            String s = stringRedisTemplate.opsForValue().get(userKey);
+            if (StringUtils.isNotBlank(s)) {
+                JSONObject parse = (JSONObject) JSON.parse(s);
+                resp.setCustomText(parse.getString("customText"));
+                resp.setCustomStatus(parse.getInteger("customStatus"));
+            }
+            result.put(uid, resp);
+        }
+        return result;
     }
 }
