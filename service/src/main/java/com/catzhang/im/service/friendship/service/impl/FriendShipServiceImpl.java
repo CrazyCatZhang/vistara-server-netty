@@ -826,4 +826,9 @@ public class FriendShipServiceImpl implements FriendShipService {
         return ResponseVO.successResponse(resp);
 
     }
+
+    @Override
+    public List<String> getAllFriendId(String userId, Integer appId) {
+        return friendShipMapper.getAllFriendId(userId,appId);
+    }
 }

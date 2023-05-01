@@ -40,4 +40,6 @@ public interface FriendShipService {
     ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(VerifyFriendShipReq req);
 
     ResponseVO<SyncResp<FriendShipEntity>> syncFriendshipList(SyncReq req);
+
+    List<String> getAllFriendId(String userId, Integer appId);
 }
