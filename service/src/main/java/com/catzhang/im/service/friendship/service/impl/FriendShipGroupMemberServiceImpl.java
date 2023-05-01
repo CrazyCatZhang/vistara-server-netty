@@ -99,6 +99,7 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
             }
             getSingleUserInfoReq.setUserId(toId);
             handleAddFriendShipGroupMemberReq.setToId(toId);
+            handleAddFriendShipGroupMemberReq.setAppId(req.getAppId());
             ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
             if (singleUserInfo.isOk()) {
                 ResponseVO<HandleAddFriendShipGroupMemberResp> handleAddFriendShipGroupMemberRespResponseVO = this.handleAddFriendShipGroupMember(handleAddFriendShipGroupMemberReq);

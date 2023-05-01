@@ -5,14 +5,18 @@ import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.catzhang.im.codec.pack.LoginPack;
 import com.catzhang.im.codec.pack.message.ChatMessageAck;
+import com.catzhang.im.codec.pack.user.LoginAckPack;
+import com.catzhang.im.codec.pack.user.UserStatusChangeNotifyPack;
 import com.catzhang.im.codec.proto.Message;
 import com.catzhang.im.codec.proto.MessagePack;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
+import com.catzhang.im.common.enums.ConnectStatus;
 import com.catzhang.im.common.enums.ImConnectStatus;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.enums.command.MessageCommand;
 import com.catzhang.im.common.enums.command.SystemCommand;
+import com.catzhang.im.common.enums.command.UserEventCommand;
 import com.catzhang.im.common.model.UserClientDto;
 import com.catzhang.im.common.model.UserSession;
 import com.catzhang.im.common.model.message.VerifySendMessageReq;
@@ -99,6 +103,22 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             userClientDto.setAppId(message.getMessageHeader().getAppId());
             RTopic topic = redissonClient.getTopic(Constants.RedisConstants.USERLOGINCHANNEL);
             topic.publish(JSONObject.toJSONString(userClientDto));
+
+            UserStatusChangeNotifyPack userStatusChangeNotifyPack = new UserStatusChangeNotifyPack();
+            userStatusChangeNotifyPack.setAppId(message.getMessageHeader().getAppId());
+            userStatusChangeNotifyPack.setUserId(loginPack.getUserId());
+            userStatusChangeNotifyPack.setStatus(ConnectStatus.ONLINE_STATUS.getCode());
+            MessageProducer.sendMessage(userStatusChangeNotifyPack, message.getMessageHeader(), UserEventCommand.USER_ONLINE_STATUS_CHANGE.getCommand());
+
+            MessagePack<LoginAckPack> loginSuccess = new MessagePack<>();
+            LoginAckPack loginAckPack = new LoginAckPack();
+            loginAckPack.setUserId(loginPack.getUserId());
+            loginSuccess.setCommand(SystemCommand.LOGINACK.getCommand());
+            loginSuccess.setData(loginAckPack);
+            loginSuccess.setImei(message.getMessageHeader().getImei());
+            loginSuccess.setAppId(message.getMessageHeader().getAppId());
+            channelHandlerContext.channel().writeAndFlush(loginSuccess);
+
 
         } else if (command == SystemCommand.LOGOUT.getCommand()) {
             logger.info("用户已登出.........");
