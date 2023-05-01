@@ -2,7 +2,9 @@ package com.catzhang.im.service.friendship.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.codec.pack.friendship.*;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
@@ -10,6 +12,8 @@ import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.*;
 import com.catzhang.im.common.enums.command.FriendshipEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
 import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipGroupMemberEntity;
 import com.catzhang.im.service.friendship.dao.FriendShipRequestEntity;
@@ -789,5 +793,37 @@ public class FriendShipServiceImpl implements FriendShipService {
             }
         });
         return ResponseVO.successResponse(resp);
+    }
+
+    @Override
+    public ResponseVO<SyncResp<FriendShipEntity>> syncFriendshipList(SyncReq req) {
+
+        if (req.getMaxLimit() > 100) {
+            req.setMaxLimit(100);
+        }
+
+        SyncResp<FriendShipEntity> resp = new SyncResp<>();
+        QueryWrapper<FriendShipEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("from_id", req.getOperator());
+        queryWrapper.gt("friend_sequence", req.getLastSequence());
+        queryWrapper.eq("app_id", req.getAppId());
+        queryWrapper.last(" limit " + req.getMaxLimit());
+        queryWrapper.orderByAsc("friend_sequence");
+        List<FriendShipEntity> list = friendShipMapper.selectList(queryWrapper);
+
+        if (!CollectionUtils.isEmpty(list)) {
+            FriendShipEntity maxSequenceEntity = list.get(list.size() - 1);
+            resp.setDataList(list);
+            //设置最大seq
+            Long friendShipMaxSequence = friendShipMapper.getFriendShipMaxSeq(req.getAppId(), req.getOperator());
+            resp.setMaxSequence(friendShipMaxSequence);
+            //设置是否拉取完毕
+            resp.setCompleted(maxSequenceEntity.getFriendSequence() >= friendShipMaxSequence);
+            return ResponseVO.successResponse(resp);
+        }
+
+        resp.setCompleted(true);
+        return ResponseVO.successResponse(resp);
+
     }
 }

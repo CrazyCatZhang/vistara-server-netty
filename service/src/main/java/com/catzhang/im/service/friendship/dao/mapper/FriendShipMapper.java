@@ -66,7 +66,7 @@ public interface FriendShipMapper extends BaseMapper<FriendShipEntity> {
             " when a.black != 1 and b.black != 1 then 4 \n" +
             " end \n" +
             " ) \n " +
-            " as status from "+
+            " as status from " +
             " (select from_id AS fromId , to_id AS toId , if(black = 1,1,0) as black from im_friendship where app_id = #{appId} and from_id = #{fromId} AND to_id in " +
             "<foreach collection='toIds' index='index' item='id' separator=',' close=')' open='('>" +
             " #{id} " +
@@ -77,8 +77,11 @@ public interface FriendShipMapper extends BaseMapper<FriendShipEntity> {
             " #{id} " +
             "</foreach>" +
             " ) as b " +
-            " on a.fromId = b.toId AND b.fromId = a.toId "+
+            " on a.fromId = b.toId AND b.fromId = a.toId " +
             "</script>"
     )
     List<VerifyFriendShipResp> verifyBidirectionalFriendShipBlack(VerifyFriendShipReq req);
+
+    @Select(" select max(friend_sequence) from im_friendship where app_id = #{appId} AND from_id = #{operator} ")
+    Long getFriendShipMaxSeq(Integer appId, String operator);
 }

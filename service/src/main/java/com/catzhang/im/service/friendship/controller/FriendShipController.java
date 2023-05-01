@@ -1,6 +1,9 @@
 package com.catzhang.im.service.friendship.controller;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
+import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipService;
@@ -73,5 +76,10 @@ public class FriendShipController {
     @GetMapping("verifyBlack")
     public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(@RequestBody @Validated VerifyFriendShipReq req) {
         return friendShipService.verifyFriendShipBlack(req);
+    }
+
+    @PostMapping("syncFriendshipList")
+    public ResponseVO<SyncResp<FriendShipEntity>> verifyFriendShipBlack(@RequestBody @Validated SyncReq req) {
+        return friendShipService.syncFriendshipList(req);
     }
 }

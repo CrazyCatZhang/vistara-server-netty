@@ -1,6 +1,9 @@
 package com.catzhang.im.service.friendship.service;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
+import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 
@@ -35,4 +38,6 @@ public interface FriendShipService {
     ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(DeleteFriendShipBlackReq req);
 
     ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(VerifyFriendShipReq req);
+
+    ResponseVO<SyncResp<FriendShipEntity>> syncFriendshipList(SyncReq req);
 }
