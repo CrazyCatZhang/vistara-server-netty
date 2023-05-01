@@ -14,6 +14,9 @@ import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.common.route.RouteHandle;
 import com.catzhang.im.common.route.RouteInfo;
 import com.catzhang.im.common.utils.RouteInfoParseUtil;
+import com.catzhang.im.service.group.service.GroupMemberService;
+import com.catzhang.im.service.group.service.GroupRequestService;
+import com.catzhang.im.service.group.service.GroupService;
 import com.catzhang.im.service.user.dao.UserDataEntity;
 import com.catzhang.im.service.user.dao.mapper.UserDataMapper;
 import com.catzhang.im.service.user.model.req.*;
@@ -24,6 +27,7 @@ import com.catzhang.im.service.utils.MessageProducer;
 import com.catzhang.im.service.utils.ZKit;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +59,18 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     MessageProducer messageProducer;
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    GroupService groupService;
+
+    @Autowired
+    GroupMemberService groupMemberService;
+
+    @Autowired
+    GroupRequestService groupRequestService;
 
     @Override
     public ResponseVO<ImportUserResp> importUser(ImportUserReq req) {
@@ -213,5 +229,20 @@ public class UserServiceImpl implements UserService {
         RouteInfo parse = RouteInfoParseUtil.parse(s);
 
         return ResponseVO.successResponse(new LoginResp(parse.getIp(), parse.getPort()));
+    }
+
+    @Override
+    public ResponseVO<Map<Object, Object>> getUserSequence(GetUserSequenceReq req) {
+        Map<Object, Object> entries = stringRedisTemplate.opsForHash().entries(req.getAppId() + ":" + Constants.RedisConstants.SEQUENCEPREFIX + ":" + req.getUserId());
+
+        Long userGroupMaxSequence = groupService.getUserGroupMaxSequence(req.getUserId(), req.getAppId());
+
+        //TODO: 获取最大群成员Sequence
+
+        //TODO: 获取最大群申请Sequence
+
+        entries.put(Constants.SequenceConstants.GROUP, userGroupMaxSequence);
+
+        return ResponseVO.successResponse(entries);
     }
 }

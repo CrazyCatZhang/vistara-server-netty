@@ -46,4 +46,6 @@ public class FriendShipGroupController {
     public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(@RequestBody @Validated DeleteFriendShipGroupMemberReq req) {
         return friendShipGroupMemberService.deleteFriendShipGroupMember(req);
     }
+
+    //TODO: 同步最大分组Sequence
 }

@@ -44,4 +44,6 @@ public class GroupRequestController {
         return groupRequestService.getGroupRequest(req);
     }
 
+    //TODO: 同步最大的群申请Sequence
+
 }

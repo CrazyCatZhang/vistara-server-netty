@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * @author crazycatzhang
  */
@@ -50,5 +52,10 @@ public class UserController {
     @PostMapping("login")
     public ResponseVO<LoginResp> login(@RequestBody @Validated LoginReq req) {
         return userService.login(req);
+    }
+
+    @PostMapping("getUserSequence")
+    public ResponseVO<Map<Object, Object>> getUserSequence(@RequestBody @Validated GetUserSequenceReq req) {
+        return userService.getUserSequence(req);
     }
 }

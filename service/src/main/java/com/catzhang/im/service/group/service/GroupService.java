@@ -33,4 +33,6 @@ public interface GroupService {
     ResponseVO<AddGroupResp> addGroup(AddGroupReq req);
 
     ResponseVO<SyncResp<GroupEntity>> syncJoinedGroupList(SyncReq req);
+
+    Long getUserGroupMaxSequence(String userId, Integer appId);
 }

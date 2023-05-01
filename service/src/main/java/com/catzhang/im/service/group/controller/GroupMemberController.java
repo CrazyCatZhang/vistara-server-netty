@@ -50,4 +50,6 @@ public class GroupMemberController {
         return groupMemberService.speakMember(req);
     }
 
+    //TODO: 同步最大的群成员Sequence
+
 }

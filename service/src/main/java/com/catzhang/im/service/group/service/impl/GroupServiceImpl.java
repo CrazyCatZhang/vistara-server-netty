@@ -641,4 +641,15 @@ public class GroupServiceImpl implements GroupService {
         resp.setCompleted(true);
         return ResponseVO.successResponse(resp);
     }
+
+    @Override
+    public Long getUserGroupMaxSequence(String userId, Integer appId) {
+
+        ResponseVO<Collection<String>> collectionResponseVO = groupMemberService.syncMemberJoinedGroup(userId, appId);
+        if (!collectionResponseVO.isOk()) {
+            throw new ApplicationException(500, "");
+        }
+
+        return groupMapper.getGroupMaxSequence(collectionResponseVO.getData(), appId);
+    }
 }
