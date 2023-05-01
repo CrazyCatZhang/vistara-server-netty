@@ -19,13 +19,13 @@ public enum UserEventCommand implements Command {
     //4005 用户在线状态通知同步报文
     USER_ONLINE_STATUS_CHANGE_NOTIFY_SYNC(4005),
 
-
-    ;
+    //4006 用户自己在线状态更改通知报文
+    USER_CUSTOM_STATUS_CHANGE_NOTIFY(4006);
 
     private final int command;
 
-    UserEventCommand(int command){
-        this.command=command;
+    UserEventCommand(int command) {
+        this.command = command;
     }
 
 

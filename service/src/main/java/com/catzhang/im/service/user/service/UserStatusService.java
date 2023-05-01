@@ -1,6 +1,7 @@
 package com.catzhang.im.service.user.service;
 
 import com.catzhang.im.service.user.model.UserStatusChangeNotifyContent;
+import com.catzhang.im.service.user.model.req.SetUserCustomerStatusReq;
 import com.catzhang.im.service.user.model.req.SubscribeUserOnlineStatusReq;
 
 /**
@@ -11,4 +12,6 @@ public interface UserStatusService {
     void processUserOnlineStatusChangeNotify(UserStatusChangeNotifyContent content);
 
     void subscribeUserOnlineStatus(SubscribeUserOnlineStatusReq req);
+
+    void setUserCustomerStatus(SetUserCustomerStatusReq req);
 }

@@ -68,4 +68,10 @@ public class UserController {
         userStatusService.subscribeUserOnlineStatus(req);
         return ResponseVO.successResponse();
     }
+
+    @RequestMapping("setUserCustomerStatus")
+    public ResponseVO setUserCustomerStatus(@RequestBody @Validated SetUserCustomerStatusReq req) {
+        userStatusService.setUserCustomerStatus(req);
+        return ResponseVO.successResponse();
+    }
 }
