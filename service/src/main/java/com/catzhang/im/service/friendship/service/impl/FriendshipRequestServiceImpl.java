@@ -3,6 +3,7 @@ package com.catzhang.im.service.friendship.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.catzhang.im.codec.pack.friendship.AddFriendRequestPack;
 import com.catzhang.im.codec.pack.friendship.ApproveFriendRequestPack;
 import com.catzhang.im.codec.pack.friendship.ReadAllFriendRequestPack;
 import com.catzhang.im.common.ResponseVO;
@@ -96,13 +97,15 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
             }
         }
 
-        writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIPREQUEST, sequence);
+        writeUserSequence.writeUserSequence(req.getAppId(), req.getToItem().getToId(), Constants.SequenceConstants.FRIENDSHIPREQUEST, sequence);
 
 
-        //发送好友申请的tcp给接收方
+        //TODO: 好友添加申请TCP通知
+        AddFriendRequestPack addFriendRequestPack = new AddFriendRequestPack();
+        BeanUtils.copyProperties(friendShipRequest, addFriendRequestPack);
         messageProducer.sendToUser(req.getToItem().getToId(),
                 req.getClientType(), req.getImei(), FriendshipEventCommand.FRIEND_REQUEST,
-                friendShipRequest, req.getAppId());
+                addFriendRequestPack, req.getAppId());
 
         return ResponseVO.successResponse(new AddFriendShipRequestResp(friendShipRequest));
     }
@@ -157,7 +160,7 @@ public class FriendshipRequestServiceImpl implements FriendShipRequestService {
         approveFriendRequestPack.setSequence(sequence);
         approveFriendRequestPack.setStatus(req.getStatus());
         messageProducer.sendToUser(friendShipRequestEntity.getToId(), req.getClientType(), req.getImei(), FriendshipEventCommand
-                .FRIEND_REQUEST_APPROVER, approveFriendRequestPack, req.getAppId());
+                .FRIEND_REQUEST_APPROVE, approveFriendRequestPack, req.getAppId());
 
         return ResponseVO.successResponse(new ApproveFriendRequestResp(friendShipRequestEntity));
     }

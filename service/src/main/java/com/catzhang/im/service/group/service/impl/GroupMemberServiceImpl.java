@@ -6,10 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.catzhang.im.codec.pack.group.AddGroupMemberPack;
-import com.catzhang.im.codec.pack.group.GroupMemberSpeakPack;
-import com.catzhang.im.codec.pack.group.RemoveGroupMemberPack;
-import com.catzhang.im.codec.pack.group.UpdateGroupMemberPack;
+import com.catzhang.im.codec.pack.group.*;
 import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
@@ -28,6 +25,7 @@ import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMemberService;
 import com.catzhang.im.service.group.service.GroupService;
+import com.catzhang.im.service.sequence.RedisSequence;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
@@ -45,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author crazycatzhang
@@ -72,6 +71,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
     @Autowired
     GroupMessageProducer groupMessageProducer;
+
+    @Autowired
+    RedisSequence redisSequence;
 
     @Override
     @Transactional
@@ -111,9 +113,12 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             mute = group.getData().getMute();
         }
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.GROUPMEMBER);
+
         if (groupMemberEntity == null) {
             groupMemberEntity = new GroupMemberEntity();
             BeanUtils.copyProperties(groupMember, groupMemberEntity);
+            groupMemberEntity.setSequence(sequence);
             groupMemberEntity.setMute(mute);
             groupMemberEntity.setGroupId(req.getGroupId());
             groupMemberEntity.setAppId(req.getAppId());
@@ -122,23 +127,23 @@ public class GroupMemberServiceImpl implements GroupMemberService {
                 groupMemberEntity.setRole(GroupMemberRole.ORDINARY.getCode());
             }
             int insert = groupMemberMapper.insert(groupMemberEntity);
-            if (insert == 1) {
-                return ResponseVO.successResponse(new AddGroupMemberResp(groupMemberEntity));
+            if (insert != 1) {
+                return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
             }
-            return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
         } else if (GroupMemberRole.LEAVE.getCode() == groupMember.getRole()) {
             BeanUtils.copyProperties(groupMember, groupMemberEntity);
+            groupMemberEntity.setSequence(sequence);
             groupMemberEntity.setRole(GroupMemberRole.ORDINARY.getCode());
             groupMemberEntity.setMute(mute);
             groupMemberEntity.setJoinTime(System.currentTimeMillis());
             int update = groupMemberMapper.update(groupMemberEntity, lambdaQueryWrapper);
-            if (update == 1) {
-                return ResponseVO.successResponse(new AddGroupMemberResp(groupMemberEntity));
+            if (update != 1) {
+                return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
             }
-            return ResponseVO.errorResponse(GroupErrorCode.USER_JOIN_GROUP_ERROR);
         }
 
-        return ResponseVO.errorResponse(GroupErrorCode.USER_IS_JOINED_GROUP);
+        return ResponseVO.successResponse(new AddGroupMemberResp(groupMemberEntity));
+
     }
 
     @Override
@@ -296,9 +301,12 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         List<String> successIds = new ArrayList<>();
 
+        AtomicLong sequence = new AtomicLong(0L);
+
         members.forEach(member -> {
             addGroupMemberReq.setGroupMember(member);
             ResponseVO<AddGroupMemberResp> addGroupMemberRespResponseVO = this.addGroupMember(addGroupMemberReq);
+            sequence.set(addGroupMemberRespResponseVO.getData().getGroupMemberEntity().getSequence());
             AddMemberResp addMemberResp = new AddMemberResp();
             addMemberResp.setMemberId(member.getMemberId());
             if (addGroupMemberRespResponseVO.isOk()) {
@@ -317,6 +325,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         AddGroupMemberPack addGroupMemberPack = new AddGroupMemberPack();
         addGroupMemberPack.setGroupId(req.getGroupId());
         addGroupMemberPack.setMembers(successIds);
+        addGroupMemberPack.setSequence(sequence.get());
         groupMessageProducer.producer(req.getOperator(), GroupEventCommand.ADDED_MEMBER, addGroupMemberPack
                 , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
@@ -400,6 +409,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         RemoveGroupMemberPack removeGroupMemberPack = new RemoveGroupMemberPack();
         removeGroupMemberPack.setGroupId(req.getGroupId());
         removeGroupMemberPack.setMember(req.getMemberId());
+        removeGroupMemberPack.setSequence(removeMemberRespResponseVO.getData().getSequence());
         groupMessageProducer.producer(req.getMemberId(), GroupEventCommand.DELETED_MEMBER, removeGroupMemberPack
                 , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
@@ -435,18 +445,21 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             return ResponseVO.errorResponse(roleInGroup.getCode(), roleInGroup.getMsg());
         }
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.GROUPMEMBER);
+
         GetRoleInGroupResp data = roleInGroup.getData();
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
                 .eq(GroupMemberEntity::getGroupId, req.getGroupId())
                 .eq(GroupMemberEntity::getMemberId, req.getMemberId())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
-                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
+                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis())
+                .set(GroupMemberEntity::getSequence, sequence);
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
         if (update != 1) {
             return ResponseVO.errorResponse(GroupErrorCode.FAILED_TO_REMOVE_GROUP_MEMBERS);
         }
-        return ResponseVO.successResponse(new RemoveMemberResp(req.getMemberId()));
+        return ResponseVO.successResponse(new RemoveMemberResp(req.getMemberId(), sequence));
     }
 
     @Override
@@ -473,16 +486,27 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             throw new ApplicationException(GroupErrorCode.GROUP_OWNER_IS_NOT_REMOVE);
         }
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.GROUPMEMBER);
+
         LambdaUpdateWrapper<GroupMemberEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
         lambdaUpdateWrapper.eq(GroupMemberEntity::getAppId, req.getAppId())
                 .eq(GroupMemberEntity::getGroupId, req.getGroupId())
                 .eq(GroupMemberEntity::getMemberId, req.getOperator())
                 .set(GroupMemberEntity::getRole, GroupMemberRole.LEAVE.getCode())
-                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis());
+                .set(GroupMemberEntity::getLeaveTime, System.currentTimeMillis())
+                .set(GroupMemberEntity::getSequence, sequence);
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
         if (update != 1) {
             throw new ApplicationException(GroupErrorCode.FAILED_TO_REMOVE_GROUP_MEMBERS);
         }
+
+        //TODO: 退出群TCP通知
+        ExitGroupPack exitGroupPack = new ExitGroupPack();
+        exitGroupPack.setGroupId(req.getGroupId());
+        exitGroupPack.setUserId(req.getOperator());
+        exitGroupPack.setSequence(sequence);
+        groupMessageProducer.producer(req.getOperator(), GroupEventCommand.EXIT_GROUP, exitGroupPack
+                , new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new ExitGroupResp(req.getOperator()));
     }
@@ -579,6 +603,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             lambdaUpdateWrapper.set(GroupMemberEntity::getRole, req.getRole());
         }
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.GROUPMEMBER);
+        lambdaUpdateWrapper.set(GroupMemberEntity::getSequence, sequence);
+
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
         if (update != 1) {
             return ResponseVO.errorResponse();
@@ -587,6 +614,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         //TODO: 更新群成员通知
         UpdateGroupMemberPack pack = new UpdateGroupMemberPack();
         BeanUtils.copyProperties(req, pack);
+        pack.setSequence(sequence);
         groupMessageProducer.producer(req.getOperator(), GroupEventCommand.UPDATED_MEMBER, pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new UpdateGroupMemberResp(groupMemberEntity));
@@ -660,6 +688,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
             lambdaUpdateWrapper.set(GroupMemberEntity::getSpeakDate, req.getSpeakDate());
         }
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.GROUPMEMBER);
+        lambdaUpdateWrapper.set(GroupMemberEntity::getSpeakDate, sequence);
+
         int update = groupMemberMapper.update(null, lambdaUpdateWrapper);
         if (update != 1) {
             return ResponseVO.errorResponse(GroupErrorCode.MUTING_FAILED);
@@ -668,6 +699,7 @@ public class GroupMemberServiceImpl implements GroupMemberService {
         //TODO: 禁言群成员通知
         GroupMemberSpeakPack pack = new GroupMemberSpeakPack();
         BeanUtils.copyProperties(req, pack);
+        pack.setSequence(sequence);
         groupMessageProducer.producer(req.getOperator(), GroupEventCommand.SPEAK_GROUP_MEMBER, pack,
                 new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 

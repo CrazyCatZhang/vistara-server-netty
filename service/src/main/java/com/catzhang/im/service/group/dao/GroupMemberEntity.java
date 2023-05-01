@@ -41,4 +41,6 @@ public class GroupMemberEntity {
     private String joinType;
 
     private String extra;
+
+    private Long sequence;
 }

@@ -15,4 +15,6 @@ public class GroupMemberSpeakPack {
 
     private Long speakDate;
 
+    private Long sequence;
+
 }

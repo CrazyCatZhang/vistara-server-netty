@@ -17,4 +17,6 @@ public class FriendShipGroupMemberEntity {
 
     private String toId;
 
+    private Long sequence;
+
 }

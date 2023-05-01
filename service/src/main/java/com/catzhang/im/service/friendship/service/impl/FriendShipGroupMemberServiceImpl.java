@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendGroupMemberPack;
 import com.catzhang.im.codec.pack.friendship.DeleteFriendGroupMemberPack;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.enums.command.FriendshipEventCommand;
 import com.catzhang.im.common.model.ClientInfo;
@@ -14,10 +15,12 @@ import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
 import com.catzhang.im.service.friendship.service.FriendShipService;
+import com.catzhang.im.service.sequence.RedisSequence;
 import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
 import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
 import com.catzhang.im.service.user.service.UserService;
 import com.catzhang.im.service.utils.MessageProducer;
+import com.catzhang.im.service.utils.WriteUserSequence;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +48,12 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
 
     @Autowired
     MessageProducer messageProducer;
+
+    @Autowired
+    RedisSequence redisSequence;
+
+    @Autowired
+    WriteUserSequence writeUserSequence;
 
     @Override
     @Transactional
@@ -81,6 +90,8 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
         HandleAddFriendShipGroupMemberReq handleAddFriendShipGroupMemberReq = new HandleAddFriendShipGroupMemberReq();
         handleAddFriendShipGroupMemberReq.setGroupId(friendShipGroup.getData().getFriendShipGroupEntity().getGroupId());
 
+        long sequence = 0L;
+
         for (String toId :
                 req.getToIds()) {
             if (isNotFriendIds.contains(toId)) {
@@ -97,6 +108,8 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
                 }
                 if (handleAddFriendShipGroupMemberRespResponseVO.getData().getResult() == 1) {
                     successIds.add(toId);
+                    sequence = handleAddFriendShipGroupMemberRespResponseVO.getData().getSequence();
+                    writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIPGROUPMEMBER, sequence);
                 }
             } else {
                 return ResponseVO.errorResponse(singleUserInfo.getCode(), toId + singleUserInfo.getMsg());
@@ -108,6 +121,7 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
         pack.setFromId(req.getFromId());
         pack.setGroupName(req.getGroupName());
         pack.setToIds(successIds);
+        pack.setSequence(sequence);
         messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_MEMBER_ADD,
                 pack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
@@ -116,12 +130,17 @@ public class FriendShipGroupMemberServiceImpl implements FriendShipGroupMemberSe
 
     @Override
     public ResponseVO<HandleAddFriendShipGroupMemberResp> handleAddFriendShipGroupMember(HandleAddFriendShipGroupMemberReq req) {
+
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIPGROUPMEMBER);
+
         FriendShipGroupMemberEntity friendShipGroupMemberEntity = new FriendShipGroupMemberEntity();
         friendShipGroupMemberEntity.setGroupId(req.getGroupId());
         friendShipGroupMemberEntity.setToId(req.getToId());
+        friendShipGroupMemberEntity.setSequence(sequence);
+
         try {
             int insert = friendShipGroupMemberMapper.insert(friendShipGroupMemberEntity);
-            return ResponseVO.successResponse(new HandleAddFriendShipGroupMemberResp(insert));
+            return ResponseVO.successResponse(new HandleAddFriendShipGroupMemberResp(insert, friendShipGroupMemberEntity.getSequence()));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseVO.errorResponse();

@@ -14,4 +14,6 @@ public class RemoveMemberResp {
 
     private String memberId;
 
+    private Long sequence;
+
 }

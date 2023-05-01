@@ -16,4 +16,6 @@ public class UpdateGroupMemberPack {
     private String alias;
 
     private String extra;
+
+    private Long sequence;
 }

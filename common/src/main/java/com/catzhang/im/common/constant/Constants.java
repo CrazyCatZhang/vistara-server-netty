@@ -133,7 +133,13 @@ public class Constants {
 
         public static final String FRIENDSHIPGROUP = "friendshipGroupSequence";
 
+        public static final String FRIENDSHIPGROUPMEMBER = "friendshipGroupMemberSequence";
+
         public static final String GROUP = "groupSequence";
+
+        public static final String GROUPREQUEST = "groupRequestSequence";
+
+        public static final String GROUPMEMBER = "groupMemberSequence";
 
         public static final String CONVERSATION = "conversationSequence";
 

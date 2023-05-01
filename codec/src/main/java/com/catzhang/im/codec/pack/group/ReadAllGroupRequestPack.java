@@ -7,12 +7,9 @@ import lombok.Data;
  * @author crazycatzhang
  */
 @Data
-public class TransferGroupPack {
+public class ReadAllGroupRequestPack {
 
-    private String groupId;
-
-    private String ownerId;
+    private String fromId;
 
     private Long sequence;
-
 }

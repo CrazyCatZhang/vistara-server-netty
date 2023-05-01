@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.catzhang.im.codec.pack.friendship.AddFriendGroupPack;
 import com.catzhang.im.codec.pack.friendship.DeleteFriendGroupPack;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.DelFlagEnum;
 import com.catzhang.im.common.enums.FriendShipErrorCode;
 import com.catzhang.im.common.enums.command.FriendshipEventCommand;
@@ -16,7 +17,9 @@ import com.catzhang.im.service.friendship.model.req.*;
 import com.catzhang.im.service.friendship.model.resp.*;
 import com.catzhang.im.service.friendship.service.FriendShipGroupMemberService;
 import com.catzhang.im.service.friendship.service.FriendShipGroupService;
+import com.catzhang.im.service.sequence.RedisSequence;
 import com.catzhang.im.service.utils.MessageProducer;
+import com.catzhang.im.service.utils.WriteUserSequence;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DuplicateKeyException;
@@ -43,6 +46,12 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
     @Autowired
     MessageProducer messageProducer;
 
+    @Autowired
+    RedisSequence redisSequence;
+
+    @Autowired
+    WriteUserSequence writeUserSequence;
+
     @Override
     @Transactional
     public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(AddFriendShipGroupReq req) {
@@ -62,10 +71,14 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         isDeletedFriendShipGroupReq.setFromId(req.getFromId());
         FriendShipGroupEntity deletedGroup = friendShipGroupMapper.isDeletedGroup(isDeletedFriendShipGroupReq);
         FriendShipGroupEntity friendShipGroup;
+
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIPGROUP);
+
         if (deletedGroup == null) {
             friendShipGroup = new FriendShipGroupEntity();
             friendShipGroup.setAppId(req.getAppId());
             friendShipGroup.setGroupName(req.getGroupName());
+            friendShipGroup.setSequence(sequence);
             friendShipGroup.setFromId(req.getFromId());
             friendShipGroup.setDelFlag(DelFlagEnum.NORMAL.getCode());
             friendShipGroup.setCreateTime(System.currentTimeMillis());
@@ -84,9 +97,12 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             recoveryFriendShipGroupReq.setUpdateTime(System.currentTimeMillis());
             friendShipGroupMapper.recovery(recoveryFriendShipGroupReq);
             deletedGroup.setDelFlag(DelFlagEnum.NORMAL.getCode());
+            deletedGroup.setSequence(sequence);
             deletedGroup.setUpdateTime(recoveryFriendShipGroupReq.getUpdateTime());
             friendShipGroup = deletedGroup;
         }
+
+        writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIPGROUP, sequence);
 
         if (CollectionUtil.isNotEmpty(req.getToIds())) {
             AddFriendShipGroupMemberReq addFriendShipGroupMemberReq = new AddFriendShipGroupMemberReq();
@@ -102,11 +118,12 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         }
 
         //TODO: 添加好友分组消息通知
-        AddFriendGroupPack addFriendGropPack = new AddFriendGroupPack();
-        addFriendGropPack.setFromId(req.getFromId());
-        addFriendGropPack.setGroupName(req.getGroupName());
+        AddFriendGroupPack addFriendGroupPack = new AddFriendGroupPack();
+        addFriendGroupPack.setFromId(req.getFromId());
+        addFriendGroupPack.setGroupName(req.getGroupName());
+        addFriendGroupPack.setSequence(sequence);
         messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_ADD,
-                addFriendGropPack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
+                addFriendGroupPack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));
 
         return ResponseVO.successResponse(new AddFriendShipGroupResp(friendShipGroup));
     }
@@ -131,6 +148,7 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         Map<String, List<String>> successGroups = new HashMap<>();
         Map<String, String> failureGroups = new HashMap<>();
 
+        long sequence = redisSequence.getSequence(req.getAppId() + ":" + Constants.SequenceConstants.FRIENDSHIPGROUP);
 
         for (String groupName : req.getGroupNames()) {
             List<String> toIds = new ArrayList<>();
@@ -141,12 +159,16 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
             FriendShipGroupEntity friendShipGroupEntity = friendShipGroupMapper.selectOne(lambdaQueryWrapper);
             if (friendShipGroupEntity != null) {
                 friendShipGroupEntity.setUpdateTime(System.currentTimeMillis());
+                friendShipGroupEntity.setSequence(sequence);
                 friendShipGroupMapper.update(friendShipGroupEntity, lambdaQueryWrapper);
                 int delete = friendShipGroupMapper.delete(lambdaQueryWrapper);
                 if (delete != 1) {
                     failureGroups.put(groupName, FriendShipErrorCode.GROUP_DELETION_FAILED.getError());
                     continue;
                 }
+
+                writeUserSequence.writeUserSequence(req.getAppId(), req.getFromId(), Constants.SequenceConstants.FRIENDSHIPGROUP, sequence);
+
                 ClearFriendShipGroupMemberReq clearFriendShipGroupMemberReq = new ClearFriendShipGroupMemberReq();
                 clearFriendShipGroupMemberReq.setGroupId(friendShipGroupEntity.getGroupId());
                 ResponseVO<ClearFriendShipGroupMemberResp> clearFriendShipGroupMemberRespResponseVO = friendShipGroupMemberService.clearFriendShipGroupMember(clearFriendShipGroupMemberReq);
@@ -168,6 +190,7 @@ public class FriendShipGroupServiceImpl implements FriendShipGroupService {
         DeleteFriendGroupPack deleteFriendGroupPack = new DeleteFriendGroupPack();
         deleteFriendGroupPack.setFromId(req.getFromId());
         deleteFriendGroupPack.setGroupNames(req.getGroupNames());
+        deleteFriendGroupPack.setSequence(sequence);
         //TCP通知
         messageProducer.sendToUserExceptClient(req.getFromId(), FriendshipEventCommand.FRIEND_GROUP_DELETE,
                 deleteFriendGroupPack, new ClientInfo(req.getAppId(), req.getClientType(), req.getImei()));

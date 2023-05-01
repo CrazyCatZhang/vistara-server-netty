@@ -15,4 +15,6 @@ public class AddGroupMemberPack {
 
     private List<String> members;
 
+    private Long sequence;
+
 }

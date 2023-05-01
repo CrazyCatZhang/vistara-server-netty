@@ -13,4 +13,6 @@ public class RemoveGroupMemberPack {
 
     private String member;
 
+    private Long sequence;
+
 }

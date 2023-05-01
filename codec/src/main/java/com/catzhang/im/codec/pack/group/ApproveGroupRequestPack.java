@@ -7,12 +7,12 @@ import lombok.Data;
  * @author crazycatzhang
  */
 @Data
-public class TransferGroupPack {
+public class ApproveGroupRequestPack {
 
-    private String groupId;
+    private Long id;
 
-    private String ownerId;
+    //1同意 2拒绝
+    private Integer status;
 
     private Long sequence;
-
 }

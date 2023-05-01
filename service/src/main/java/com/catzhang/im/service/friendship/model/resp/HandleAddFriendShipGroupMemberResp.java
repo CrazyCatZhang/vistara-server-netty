@@ -9,5 +9,9 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class HandleAddFriendShipGroupMemberResp {
+
     private int result;
+
+    private Long sequence;
+
 }

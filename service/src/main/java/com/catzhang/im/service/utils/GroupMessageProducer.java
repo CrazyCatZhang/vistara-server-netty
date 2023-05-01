@@ -2,6 +2,7 @@ package com.catzhang.im.service.utils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.codec.pack.group.AddGroupMemberPack;
+import com.catzhang.im.codec.pack.group.ExitGroupPack;
 import com.catzhang.im.codec.pack.group.RemoveGroupMemberPack;
 import com.catzhang.im.codec.pack.group.UpdateGroupMemberPack;
 import com.catzhang.im.common.ClientType;
@@ -93,6 +94,21 @@ public class GroupMessageProducer {
                     messageProducer.sendToUser(member.getMemberId(), command, data, clientInfo.getAppId());
                 }
             }
+        } else if (command.equals(GroupEventCommand.EXIT_GROUP)) {
+            //发送给管理员和退出人本身
+            List<GroupMemberDto> groupManager = groupMemberService.getGroupManager(getGroupManagerReq);
+            ExitGroupPack javaObject = json.toJavaObject(ExitGroupPack.class);
+            String exitMemberId = javaObject.getUserId();
+            GroupMemberDto groupMemberDto = new GroupMemberDto();
+            groupMemberDto.setMemberId(exitMemberId);
+            groupManager.add(groupMemberDto);
+            groupManager.forEach(manager -> {
+                if (clientInfo.getClientType() != ClientType.WEBAPI.getCode() && manager.getMemberId().equals(userId)) {
+                    messageProducer.sendToUserExceptClient(manager.getMemberId(), command, data, clientInfo);
+                } else {
+                    messageProducer.sendToUser(manager.getMemberId(), command, data, clientInfo.getAppId());
+                }
+            });
         } else {
             groupMemberId.forEach(memberId -> {
                 if (clientInfo.getClientType() != null && clientInfo.getClientType() != ClientType.WEBAPI.getCode() && Objects.equals(memberId, userId)) {

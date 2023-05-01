@@ -2,16 +2,15 @@ package com.catzhang.im.codec.pack.group;
 
 import lombok.Data;
 
-
 /**
  * @author crazycatzhang
  */
 @Data
-public class TransferGroupPack {
+public class ExitGroupPack {
 
     private String groupId;
 
-    private String ownerId;
+    private String userId;
 
     private Long sequence;
 

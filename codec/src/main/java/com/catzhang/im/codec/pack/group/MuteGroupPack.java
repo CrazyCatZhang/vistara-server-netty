@@ -11,4 +11,6 @@ public class MuteGroupPack {
 
     private String groupId;
 
+    private Long sequence;
+
 }
