@@ -1,6 +1,10 @@
 package com.catzhang.im.service.group.controller;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
+import com.catzhang.im.service.friendship.dao.FriendShipEntity;
+import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
 import com.catzhang.im.service.group.service.GroupMessageService;
@@ -71,4 +75,8 @@ public class GroupController {
     public ResponseVO<SendGroupMessageResp> sendMessage(@RequestBody @Validated SendGroupMessageReq req) {
         return groupMessageService.send(req);
     }
-}
+
+    @PostMapping("syncJoinedGroup")
+    public ResponseVO<SyncResp<GroupEntity>> verifyFriendShipBlack(@RequestBody @Validated SyncReq req) {
+        return groupService.syncJoinedGroupList(req);
+    }}

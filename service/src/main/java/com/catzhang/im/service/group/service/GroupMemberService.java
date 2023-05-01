@@ -39,4 +39,6 @@ public interface GroupMemberService {
     ResponseVO<UpdateGroupMemberResp> updateGroupMember(UpdateGroupMemberReq req);
 
     ResponseVO<SpeakMemberResp> speakMember(SpeakMemberReq req);
+
+    ResponseVO<Collection<String>> syncMemberJoinedGroup(String operator, Integer appId);
 }

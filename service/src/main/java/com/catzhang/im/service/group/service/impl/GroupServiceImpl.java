@@ -2,6 +2,7 @@ package com.catzhang.im.service.group.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.codec.pack.group.*;
@@ -12,6 +13,8 @@ import com.catzhang.im.common.enums.*;
 import com.catzhang.im.common.enums.command.GroupEventCommand;
 import com.catzhang.im.common.exception.ApplicationException;
 import com.catzhang.im.common.model.ClientInfo;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.dao.GroupMemberEntity;
 import com.catzhang.im.service.group.dao.mapper.GroupMapper;
@@ -600,5 +603,42 @@ public class GroupServiceImpl implements GroupService {
             }
         }
         return null;
+    }
+
+    @Override
+    public ResponseVO<SyncResp<GroupEntity>> syncJoinedGroupList(SyncReq req) {
+        if (req.getMaxLimit() > 100) {
+            req.setMaxLimit(100);
+        }
+
+        SyncResp<GroupEntity> resp = new SyncResp<>();
+
+        ResponseVO<Collection<String>> memberJoinedGroup = groupMemberService.syncMemberJoinedGroup(req.getOperator(), req.getAppId());
+        if (memberJoinedGroup.isOk()) {
+
+            Collection<String> data = memberJoinedGroup.getData();
+            QueryWrapper<GroupEntity> queryWrapper = new QueryWrapper<>();
+            queryWrapper.eq("app_id", req.getAppId());
+            queryWrapper.in("group_id", data);
+            queryWrapper.gt("sequence", req.getLastSequence());
+            queryWrapper.last(" limit " + req.getMaxLimit());
+            queryWrapper.orderByAsc("sequence");
+
+            List<GroupEntity> list = groupMapper.selectList(queryWrapper);
+
+            if (!CollectionUtils.isEmpty(list)) {
+                GroupEntity maxSequenceEntity = list.get(list.size() - 1);
+                resp.setDataList(list);
+                //设置最大seq
+                Long maxSequence = groupMapper.getGroupMaxSequence(data, req.getAppId());
+                resp.setMaxSequence(maxSequence);
+                //设置是否拉取完毕
+                resp.setCompleted(maxSequenceEntity.getSequence() >= maxSequence);
+                return ResponseVO.successResponse(resp);
+            }
+
+        }
+        resp.setCompleted(true);
+        return ResponseVO.successResponse(resp);
     }
 }

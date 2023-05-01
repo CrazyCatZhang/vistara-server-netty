@@ -1,6 +1,8 @@
 package com.catzhang.im.service.group.service;
 
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
 import com.catzhang.im.service.group.dao.GroupEntity;
 import com.catzhang.im.service.group.model.req.*;
 import com.catzhang.im.service.group.model.resp.*;
@@ -29,4 +31,6 @@ public interface GroupService {
     ResponseVO<MuteGroupResp> muteGroup(MuteGroupReq req);
 
     ResponseVO<AddGroupResp> addGroup(AddGroupReq req);
+
+    ResponseVO<SyncResp<GroupEntity>> syncJoinedGroupList(SyncReq req);
 }

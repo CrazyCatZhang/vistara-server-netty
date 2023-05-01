@@ -705,4 +705,9 @@ public class GroupMemberServiceImpl implements GroupMemberService {
 
         return ResponseVO.successResponse(new SpeakMemberResp(groupMemberEntity));
     }
+
+    @Override
+    public ResponseVO<Collection<String>> syncMemberJoinedGroup(String operator, Integer appId) {
+        return ResponseVO.successResponse(groupMemberMapper.syncJoinedGroupId(appId, operator, GroupMemberRole.LEAVE.getCode()));
+    }
 }

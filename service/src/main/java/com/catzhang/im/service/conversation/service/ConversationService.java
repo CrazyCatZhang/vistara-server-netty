@@ -1,6 +1,7 @@
 package com.catzhang.im.service.conversation.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.catzhang.im.codec.pack.conversation.DeleteConversationPack;
 import com.catzhang.im.codec.pack.conversation.UpdateConversationPack;
 import com.catzhang.im.common.ResponseVO;
@@ -10,6 +11,8 @@ import com.catzhang.im.common.enums.ConversationErrorCode;
 import com.catzhang.im.common.enums.ConversationType;
 import com.catzhang.im.common.enums.command.ConversationEventCommand;
 import com.catzhang.im.common.model.ClientInfo;
+import com.catzhang.im.common.model.SyncReq;
+import com.catzhang.im.common.model.SyncResp;
 import com.catzhang.im.common.model.message.MessageReadedContent;
 import com.catzhang.im.service.conversation.dao.ConversationSetEntity;
 import com.catzhang.im.service.conversation.dao.mapper.ConversationSetMapper;
@@ -21,6 +24,8 @@ import com.catzhang.im.service.utils.WriteUserSequence;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author crazycatzhang
@@ -145,4 +150,34 @@ public class ConversationService {
         return ResponseVO.successResponse();
     }
 
+    public ResponseVO<SyncResp<ConversationSetEntity>> syncConversationSet(SyncReq req) {
+
+        if (req.getMaxLimit() > 100) {
+            req.setMaxLimit(100);
+        }
+
+        SyncResp<ConversationSetEntity> resp = new SyncResp<>();
+        QueryWrapper<ConversationSetEntity> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("from_id", req.getOperator());
+        queryWrapper.gt("sequence", req.getLastSequence());
+        queryWrapper.eq("app_id", req.getAppId());
+        queryWrapper.last(" limit " + req.getMaxLimit());
+        queryWrapper.orderByAsc("sequence");
+        List<ConversationSetEntity> list = conversationSetMapper.selectList(queryWrapper);
+
+        if (!CollectionUtils.isEmpty(list)) {
+            ConversationSetEntity maxSequenceEntity = list.get(list.size() - 1);
+            resp.setDataList(list);
+            //设置最大seq
+            Long friendShipMaxSequence = conversationSetMapper.geConversationSetMaxSeq(req.getAppId(), req.getOperator());
+            resp.setMaxSequence(friendShipMaxSequence);
+            //设置是否拉取完毕
+            resp.setCompleted(maxSequenceEntity.getSequence() >= friendShipMaxSequence);
+            return ResponseVO.successResponse(resp);
+        }
+
+        resp.setCompleted(true);
+        return ResponseVO.successResponse(resp);
+
+    }
 }
