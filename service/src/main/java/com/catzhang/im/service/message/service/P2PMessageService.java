@@ -1,8 +1,10 @@
 package com.catzhang.im.service.message.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.codec.pack.message.ChatMessageAck;
 import com.catzhang.im.codec.pack.message.MessageReceiveServerAckPack;
 import com.catzhang.im.common.ResponseVO;
+import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.ConversationType;
 import com.catzhang.im.common.enums.command.MessageCommand;
@@ -12,6 +14,7 @@ import com.catzhang.im.common.model.message.OfflineMessageContent;
 import com.catzhang.im.service.message.model.req.SendMessageReq;
 import com.catzhang.im.service.message.model.resp.SendMessageResp;
 import com.catzhang.im.service.sequence.RedisSequence;
+import com.catzhang.im.service.utils.CallbackService;
 import com.catzhang.im.service.utils.ConversationIdGenerate;
 import com.catzhang.im.service.utils.MessageProducer;
 import org.slf4j.Logger;
@@ -44,6 +47,12 @@ public class P2PMessageService {
 
     @Autowired
     RedisSequence redisSequence;
+
+    @Autowired
+    AppConfig appConfig;
+
+    @Autowired
+    CallbackService callbackService;
 
     private final ThreadPoolExecutor threadPoolExecutor;
 
@@ -84,6 +93,18 @@ public class P2PMessageService {
             return;
         }
 
+        //TODO: 发送消息之前回调
+        ResponseVO responseVO = ResponseVO.successResponse();
+        if (appConfig.isSendMessageAfterCallback()) {
+            responseVO = callbackService.beforeCallback(messageContent.getAppId(), Constants.CallbackCommand.SENDMESSAGEBEFORE
+                    , JSONObject.toJSONString(messageContent));
+        }
+
+        if (!responseVO.isOk()) {
+            ack(messageContent, responseVO);
+            return;
+        }
+
         long sequence = redisSequence.getSequence(messageContent.getAppId() + ":"
                 + Constants.SequenceConstants.MESSAGE + ":" + ConversationIdGenerate.generateP2PId(
                 messageContent.getFromId(), messageContent.getToId()
@@ -94,7 +115,8 @@ public class P2PMessageService {
             messageStoreService.storeP2PMessage(messageContent);
             OfflineMessageContent offlineMessageContent = new OfflineMessageContent();
             BeanUtils.copyProperties(messageContent, offlineMessageContent);
-            offlineMessageContent.setConversationType(ConversationType.P2P.getCode());;
+            offlineMessageContent.setConversationType(ConversationType.P2P.getCode());
+
             messageStoreService.storeOfflineMessage(offlineMessageContent);
             ack(messageContent, ResponseVO.successResponse());
             syncToSender(messageContent);
@@ -103,6 +125,13 @@ public class P2PMessageService {
             if (clientInfos.isEmpty()) {
                 receiverAck(messageContent);
             }
+
+            if (appConfig.isSendMessageAfterCallback()) {
+                callbackService.afterCallback(messageContent.getAppId(), Constants.CallbackCommand.SENDMESSAGEAFTER,
+                        JSONObject.toJSONString(messageContent));
+            }
+
+            logger.info("消息处理完成：{}", messageContent.getMessageId());
         });
 
     }
