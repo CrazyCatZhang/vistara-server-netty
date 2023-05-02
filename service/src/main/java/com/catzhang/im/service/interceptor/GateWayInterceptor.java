@@ -27,9 +27,6 @@ public class GateWayInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
 
-        if (1 == 1) {
-            return true;
-        }
 
         //获取appId，identifier，userSign
         String appIdStr = request.getParameter("appId");
@@ -70,6 +67,14 @@ public class GateWayInterceptor implements HandlerInterceptor {
 
         try {
             String resp = JSONObject.toJSONString(responseVO);
+
+            response.setCharacterEncoding("UTF-8");
+            response.setHeader("Content-type", "application/json;charset=UTF-8");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setHeader("Access-Control-Allow-Credentials", "true");
+            response.setHeader("Access-Control-Allow-Methods", "*");
+            response.setHeader("Access-Control-Allow-Headers", "*");
+            response.setHeader("Access-Control-Max-Age", "3600");
 
             writer = response.getWriter();
             writer.write(resp);

@@ -2,11 +2,16 @@ package com.catzhang.im.service.interceptor;
 
 import com.alibaba.fastjson.JSONObject;
 import com.catzhang.im.common.BaseErrorCode;
+import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.config.AppConfig;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.GateWayErrorCode;
+import com.catzhang.im.common.enums.UserType;
 import com.catzhang.im.common.exception.ApplicationExceptionEnum;
 import com.catzhang.im.common.utils.SignApi;
+import com.catzhang.im.service.user.model.req.GetSingleUserInfoReq;
+import com.catzhang.im.service.user.model.resp.GetSingleUserInfoResp;
+import com.catzhang.im.service.user.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +35,9 @@ public class Authentication {
     @Autowired
     AppConfig appConfig;
 
+    @Autowired
+    UserService userService;
+
     public ApplicationExceptionEnum verifyUserSign(String appId, String identifier, String userSign) {
 
         String key = appId + ":" + Constants.RedisConstants.USERSIGN + ":" + identifier + userSign;
@@ -45,7 +53,7 @@ public class Authentication {
         SignApi signApi = new SignApi(Long.parseLong(appId), privateKey);
 
         //对userSign解密
-        JSONObject jsonObject = SignApi.decodeUserSign(userSign);
+        JSONObject jsonObject = signApi.decodeUserSign(userSign);
 
         //取出解密后的appid 和 操作人 和 过期时间做匹配，不通过则提示错误
         Long expireTime = 0L;
@@ -83,11 +91,31 @@ public class Authentication {
             return GateWayErrorCode.USER_SIGN_IS_EXPIRED;
         }
 
+        String genSig = signApi.genUserSign(identifier, expireSec, time, null);
+        if (genSig.toLowerCase().equals(userSign.toLowerCase())) {
 
-        Long expiration = expireTime - System.currentTimeMillis() / 1000;
-        stringRedisTemplate.opsForValue().set(key, expireTime.toString(), expiration, TimeUnit.SECONDS);
+            long etime = expireTime - System.currentTimeMillis() / 1000;
+            stringRedisTemplate.opsForValue().set(
+                    key, expireTime.toString(), etime, TimeUnit.SECONDS
+            );
+            this.setIsAdmin(identifier, Integer.valueOf(appId));
+            return BaseErrorCode.SUCCESS;
+        }
 
-        return BaseErrorCode.SUCCESS;
+        return GateWayErrorCode.USER_SIGN_IS_ERROR;
+
+    }
+
+    private void setIsAdmin(String identifier, Integer appId) {
+        GetSingleUserInfoReq getSingleUserInfoReq = new GetSingleUserInfoReq();
+        getSingleUserInfoReq.setUserId(identifier);
+        getSingleUserInfoReq.setAppId(appId);
+        ResponseVO<GetSingleUserInfoResp> singleUserInfo = userService.getSingleUserInfo(getSingleUserInfoReq);
+        if (singleUserInfo.isOk()) {
+            RequestHolder.set(singleUserInfo.getData().getUserDataEntity().getUserType() == UserType.APP_ADMIN.getCode());
+        } else {
+            RequestHolder.set(false);
+        }
     }
 
 }

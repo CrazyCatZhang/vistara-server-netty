@@ -23,17 +23,21 @@ public class FriendShipRequestController {
     FriendShipRequestService friendShipRequestService;
 
     @PostMapping("approve")
-    public ResponseVO<ApproveFriendRequestResp> approveFriendRequest(@RequestBody ApproveFriendRequestReq req) {
+    public ResponseVO<ApproveFriendRequestResp> approveFriendRequest(@RequestBody ApproveFriendRequestReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return friendShipRequestService.approveFriendRequest(req);
     }
 
     @PutMapping("read")
-    public ResponseVO<ReadFriendShipRequestResp> readFriendShipRequest(@RequestBody @Validated ReadFriendShipRequestReq req) {
+    public ResponseVO<ReadFriendShipRequestResp> readFriendShipRequest(@RequestBody @Validated ReadFriendShipRequestReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipRequestService.readFriendShipRequest(req);
     }
 
     @GetMapping("get")
-    public ResponseVO<GetFriendShipRequestResp> getFriendShipRequest(@RequestBody @Validated GetFriendShipRequestReq req) {
+    public ResponseVO<GetFriendShipRequestResp> getFriendShipRequest(@RequestBody @Validated GetFriendShipRequestReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipRequestService.getFriendShipRequest(req);
     }
 }

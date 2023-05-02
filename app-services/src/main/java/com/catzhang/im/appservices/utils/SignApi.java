@@ -1,6 +1,7 @@
-package com.catzhang.im.common.utils;
+package com.catzhang.im.appservices.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.catzhang.im.common.utils.Base64URL;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.crypto.Mac;
@@ -28,6 +29,7 @@ public class SignApi {
         this.key = key;
     }
 
+
     /**
      * @param
      * @return com.alibaba.fastjson.JSONObject
@@ -37,7 +39,7 @@ public class SignApi {
     public JSONObject decodeUserSign(String userSig) {
         JSONObject signDoc = new JSONObject(true);
         try {
-            byte[] decodeUrlByte = Base64URL.base64DecodeUrlNotReplace(userSig.getBytes());
+            byte[] decodeUrlByte = com.catzhang.im.common.utils.Base64URL.base64DecodeUrlNotReplace(userSig.getBytes());
             byte[] decompressByte = decompress(decodeUrlByte);
             String decodeText = new String(decompressByte, StandardCharsets.UTF_8);
 
@@ -146,7 +148,7 @@ public class SignApi {
         byte[] compressedBytes = new byte[2048];
         int compressedBytesLength = compressor.deflate(compressedBytes);
         compressor.end();
-        return (new String(Base64URL.base64EncodeUrl(Arrays.copyOfRange(compressedBytes,
+        return (new String(com.catzhang.im.common.utils.Base64URL.base64EncodeUrl(Arrays.copyOfRange(compressedBytes,
                 0, compressedBytesLength)))).replaceAll("\\s*", "");
     }
 

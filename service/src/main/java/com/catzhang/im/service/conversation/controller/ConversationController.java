@@ -8,10 +8,9 @@ import com.catzhang.im.service.conversation.dao.ConversationSetEntity;
 import com.catzhang.im.service.conversation.model.DeleteConversationReq;
 import com.catzhang.im.service.conversation.model.UpdateConversationReq;
 import com.catzhang.im.service.conversation.service.ConversationService;
-import com.catzhang.im.service.friendship.dao.FriendShipEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,18 +23,21 @@ public class ConversationController {
     ConversationService conversationService;
 
     @RequestMapping("/deleteConversation")
-    public ResponseVO deleteConversation(@RequestBody @Validated DeleteConversationReq req) {
+    public ResponseVO deleteConversation(@RequestBody @Validated DeleteConversationReq req, Integer appId) {
+        req.setAppId(appId);
         return conversationService.deleteConversation(req);
     }
 
     @RequestMapping("/updateConversation")
-    public ResponseVO updateConversation(@RequestBody @Validated UpdateConversationReq
-                                                 req) {
+    public ResponseVO updateConversation(@RequestBody @Validated UpdateConversationReq req, Integer appId) {
+        req.setAppId(appId);
         return conversationService.updateConversation(req);
     }
 
-    @PostMapping("syncConversationList")
-    public ResponseVO<SyncResp<ConversationSetEntity>> verifyFriendShipBlack(@RequestBody @Validated SyncReq req) {
+    @GetMapping("syncConversationList")
+    public ResponseVO<SyncResp<ConversationSetEntity>> syncConversationList(@RequestBody @Validated SyncReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return conversationService.syncConversationSet(req);
     }
 

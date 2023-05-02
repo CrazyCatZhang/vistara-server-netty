@@ -21,32 +21,44 @@ public class GroupMemberController {
     GroupMemberService groupMemberService;
 
     @PostMapping("import")
-    public ResponseVO<List<ImportGroupMemberResp>> importGroupMember(@RequestBody @Validated ImportGroupMemberReq req) {
+    public ResponseVO<List<ImportGroupMemberResp>> importGroupMember(@RequestBody @Validated ImportGroupMemberReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.importGroupMember(req);
     }
 
     @PostMapping("add")
-    public ResponseVO<List<AddMemberResp>> addMember(@RequestBody @Validated AddMemberReq req) {
+    public ResponseVO<List<AddMemberResp>> addMember(@RequestBody @Validated AddMemberReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.addMember(req);
     }
 
     @DeleteMapping("remove")
-    public ResponseVO<RemoveMemberResp> removeMember(@RequestBody @Validated RemoveMemberReq req) {
+    public ResponseVO<RemoveMemberResp> removeMember(@RequestBody @Validated RemoveMemberReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.removeMember(req);
     }
 
     @DeleteMapping("exit")
-    public ResponseVO<ExitGroupResp> exitGroup(@RequestBody @Validated ExitGroupReq req) {
+    public ResponseVO<ExitGroupResp> exitGroup(@RequestBody @Validated ExitGroupReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.exitGroup(req);
     }
 
     @PutMapping("update")
-    public ResponseVO<UpdateGroupMemberResp> updateGroupMember(@RequestBody @Validated UpdateGroupMemberReq req) {
+    public ResponseVO<UpdateGroupMemberResp> updateGroupMember(@RequestBody @Validated UpdateGroupMemberReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.updateGroupMember(req);
     }
 
     @PutMapping("speak")
-    public ResponseVO<SpeakMemberResp> speakMember(@RequestBody @Validated SpeakMemberReq req) {
+    public ResponseVO<SpeakMemberResp> speakMember(@RequestBody @Validated SpeakMemberReq req, Integer appId, String identifier) {
+        req.setAppId(appId);
+        req.setOperator(identifier);
         return groupMemberService.speakMember(req);
     }
 

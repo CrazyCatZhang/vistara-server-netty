@@ -23,27 +23,32 @@ public class FriendShipGroupController {
     FriendShipGroupService friendShipGroupService;
 
     @PostMapping("add")
-    public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(@RequestBody @Validated AddFriendShipGroupReq req) {
+    public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(@RequestBody @Validated AddFriendShipGroupReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipGroupService.addFriendShipGroup(req);
     }
 
     @DeleteMapping("delete")
-    public ResponseVO<DeleteFriendShipGroupResp> deleteFriendShipGroup(@RequestBody @Validated DeleteFriendShipGroupReq req) {
+    public ResponseVO<DeleteFriendShipGroupResp> deleteFriendShipGroup(@RequestBody @Validated DeleteFriendShipGroupReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipGroupService.deleteFriendShipGroup(req);
     }
 
     @GetMapping("getAll")
-    public ResponseVO<GetAllFriendShipGroupResp> getAllFriendShipGroup(@RequestBody @Validated GetAllFriendShipGroupReq req) {
+    public ResponseVO<GetAllFriendShipGroupResp> getAllFriendShipGroup(@RequestBody @Validated GetAllFriendShipGroupReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipGroupService.getAllFriendShipGroup(req);
     }
 
     @PostMapping("/member/add")
-    public ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMember(@RequestBody @Validated AddFriendShipGroupMemberReq req) {
+    public ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMember(@RequestBody @Validated AddFriendShipGroupMemberReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipGroupMemberService.addFriendShipGroupMember(req);
     }
 
     @DeleteMapping("/member/delete")
-    public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(@RequestBody @Validated DeleteFriendShipGroupMemberReq req) {
+    public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(@RequestBody @Validated DeleteFriendShipGroupMemberReq req, Integer appId) {
+        req.setAppId(appId);
         return friendShipGroupMemberService.deleteFriendShipGroupMember(req);
     }
 
