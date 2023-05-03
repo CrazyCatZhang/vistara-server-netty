@@ -12,6 +12,6 @@ public interface FeignMessageService {
 
     @Headers({"Content-Type: application/json", "Accept: application/json"})
     @RequestLine("POST /message/verifySend")
-    public ResponseVO verifySendMessage(VerifySendMessageReq req);
+    ResponseVO verifySendMessage(VerifySendMessageReq req);
 
 }
