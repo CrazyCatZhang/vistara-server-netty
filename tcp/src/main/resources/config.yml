@@ -3,7 +3,7 @@ lim:
   webSocketPort: 19000
   bossThreadSize: 1
   workThreadSize: 8
-  heartbeatTimeout: 3000
+  heartbeatTimeout: 20000
   brokerId: 1000
   loginModel: 3
   logicUrl: http://127.0.0.1:8000

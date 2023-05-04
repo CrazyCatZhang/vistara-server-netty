@@ -44,7 +44,7 @@ public class TcpServer {
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         socketChannel.pipeline().addLast(new MessageDecoder());
                         socketChannel.pipeline().addLast(new MessageEncoder());
-                        socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 1));
+                        socketChannel.pipeline().addLast(new IdleStateHandler(0, 0, 10));
                         socketChannel.pipeline().addLast(new HeartBeatHandler(tcpConfig.getHeartbeatTimeout()));
                         socketChannel.pipeline().addLast(new NettyServerHandler(tcpConfig.getBrokerId(), tcpConfig.getLogicUrl()));
                     }

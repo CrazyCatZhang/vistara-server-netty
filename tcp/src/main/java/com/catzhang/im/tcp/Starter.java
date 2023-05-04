@@ -8,6 +8,7 @@ import com.catzhang.im.tcp.register.ZKit;
 import com.catzhang.im.tcp.server.TcpServer;
 import com.catzhang.im.tcp.server.WebSocketServer;
 import com.catzhang.im.tcp.utils.MqFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.I0Itec.zkclient.ZkClient;
 import org.yaml.snakeyaml.Yaml;
 
@@ -18,6 +19,7 @@ import java.net.UnknownHostException;
 /**
  * @author crazycatzhang
  */
+@Slf4j
 public class Starter {
 
     public static void main(String[] args) {

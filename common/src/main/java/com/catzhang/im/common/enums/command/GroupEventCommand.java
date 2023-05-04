@@ -64,8 +64,14 @@ public enum GroupEventCommand implements Command {
      */
     SPEAK_GROUP_MEMBER(2010),
 
+    /**
+     * 审批群申请通知
+     */
     GROUP_REQUEST_APPROVE(2011),
 
+    /**
+     * 群申请已读通知
+     */
     GROUP_REQUEST_READ(2012),
 
     //群聊消息收发 2104
