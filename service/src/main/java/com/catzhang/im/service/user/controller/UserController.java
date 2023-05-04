@@ -28,49 +28,49 @@ public class UserController {
     @Autowired
     UserStatusService userStatusService;
 
-    @PostMapping("import")
+    @RequestMapping("import")
     public ResponseVO<ImportUserResp> importUser(@RequestBody ImportUserReq req, Integer appId) {
         req.setAppId(appId);
         return userService.importUser(req);
     }
 
-    @DeleteMapping("delete")
+    @RequestMapping("delete")
     public ResponseVO<DeleteUserResp> deleteUser(@RequestBody @Validated DeleteUserReq req, Integer appId) {
         req.setAppId(appId);
         return userService.deleteUser(req);
     }
 
-    @GetMapping("getUserInfo")
+    @RequestMapping("getUserInfo")
     public ResponseVO<GetUserInfoResp> getUserInfo(@RequestBody GetUserInfoReq req, Integer appId) {
         req.setAppId(appId);
         return userService.getUserInfo(req);
     }
 
-    @GetMapping("getSingleUserInfo")
+    @RequestMapping("getSingleUserInfo")
     public ResponseVO<GetSingleUserInfoResp> getUserSequence(@RequestBody GetSingleUserInfoReq req, Integer appId) {
         req.setAppId(appId);
         return userService.getSingleUserInfo(req);
     }
 
-    @PutMapping("modifyUserInfo")
+    @RequestMapping("modifyUserInfo")
     public ResponseVO<ModifyUserInfoResp> modifyUserInfo(@RequestBody @Validated ModifyUserInfoReq req, Integer appId) {
         req.setAppId(appId);
         return userService.modifyUserInfo(req);
     }
 
-    @PostMapping("login")
+    @RequestMapping("login")
     public ResponseVO<LoginResp> login(@RequestBody @Validated LoginReq req, Integer appId) {
         req.setAppId(appId);
         return userService.login(req);
     }
 
-    @GetMapping("getUserSequence")
+    @RequestMapping("getUserSequence")
     public ResponseVO<Map<Object, Object>> getUserSequence(@RequestBody @Validated GetUserSequenceReq req, Integer appId) {
         req.setAppId(appId);
         return userService.getUserSequence(req);
     }
 
-    @PostMapping("subscribeUserOnlineStatus")
+    @RequestMapping("subscribeUserOnlineStatus")
     public ResponseVO getUserSequence(@RequestBody @Validated SubscribeUserOnlineStatusReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
@@ -78,7 +78,7 @@ public class UserController {
         return ResponseVO.successResponse();
     }
 
-    @PostMapping("setUserCustomerStatus")
+    @RequestMapping("setUserCustomerStatus")
     public ResponseVO setUserCustomerStatus(@RequestBody @Validated SetUserCustomerStatusReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
@@ -86,7 +86,7 @@ public class UserController {
         return ResponseVO.successResponse();
     }
 
-    @GetMapping("queryFriendOnlineStatus")
+    @RequestMapping("queryFriendOnlineStatus")
     public ResponseVO<Map<String, UserOnlineStatusResp>> queryFriendOnlineStatus(@RequestBody @Validated
                                                                                  PullFriendOnlineStatusReq req, Integer appId, String identifier) {
         req.setAppId(appId);
@@ -94,7 +94,7 @@ public class UserController {
         return userStatusService.queryFriendOnlineStatus(req);
     }
 
-    @GetMapping("queryUserOnlineStatus")
+    @RequestMapping("queryUserOnlineStatus")
     public ResponseVO<Map<String, UserOnlineStatusResp>> queryUserOnlineStatus(@RequestBody @Validated
                                                                                PullUserOnlineStatusReq req, Integer appId, String identifier) {
         req.setAppId(appId);

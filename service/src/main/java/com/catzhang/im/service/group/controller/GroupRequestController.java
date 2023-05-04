@@ -24,26 +24,26 @@ public class GroupRequestController {
     @Autowired
     GroupRequestService groupRequestService;
 
-    @PostMapping("add")
+    @RequestMapping("add")
     public ResponseVO<AddGroupRequestResp> addGroupRequest(@RequestBody @Validated AddGroupRequestReq req, Integer appId) {
         req.setAppId(appId);
         return groupRequestService.addGroupRequest(req);
     }
 
-    @PutMapping("approve")
+    @RequestMapping("approve")
     public ResponseVO<ApproveGroupRequestResp> approveGroupRequest(@RequestBody @Validated ApproveGroupRequestReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupRequestService.approveGroupRequest(req);
     }
 
-    @PutMapping("read")
+    @RequestMapping("read")
     public ResponseVO<ReadGroupRequestResp> readGroupRequest(@RequestBody @Validated ReadGroupRequestReq req, Integer appId) {
         req.setAppId(appId);
         return groupRequestService.readGroupRequest(req);
     }
 
-    @GetMapping("get")
+    @RequestMapping("get")
     public ResponseVO<GetGroupRequestResp> getGroupRequest(@RequestBody @Validated GetGroupRequestReq req, Integer appId) {
         req.setAppId(appId);
         return groupRequestService.getGroupRequest(req);

@@ -23,73 +23,73 @@ public class FriendShipController {
     @Autowired
     FriendShipService friendShipService;
 
-    @PostMapping("import")
+    @RequestMapping("import")
     public ResponseVO<ImportFriendShipResp> importFriendShip(@RequestBody @Validated ImportFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.importFriendShip(req);
     }
 
-    @PostMapping("add")
+    @RequestMapping("add")
     public ResponseVO<AddFriendShipResp> addFriendShip(@RequestBody @Validated AddFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.addFriendShip(req);
     }
 
-    @PutMapping("update")
+    @RequestMapping("update")
     public ResponseVO<UpdateFriendShipResp> updateFriendShip(@RequestBody @Validated UpdateFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.updateFriendShip(req);
     }
 
-    @DeleteMapping("delete")
+    @RequestMapping("delete")
     public ResponseVO<DeleteFriendShipResp> deleteFriendShip(@RequestBody @Validated DeleteFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.deleteFriendShip(req);
     }
 
-    @DeleteMapping("deleteAll")
+    @RequestMapping("deleteAll")
     public ResponseVO<DeleteAllFriendShipResp> deleteAllFriendShip(@RequestBody @Validated DeleteAllFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.deleteAllFriendShip(req);
     }
 
-    @GetMapping("getAll")
+    @RequestMapping("getAll")
     public ResponseVO<GetAllFriendShipResp> getAllFriendShip(@RequestBody @Validated GetAllFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.getAllFriendShip(req);
     }
 
-    @GetMapping("getRelation")
+    @RequestMapping("getRelation")
     public ResponseVO<GetRelationResp> getRelation(@RequestBody @Validated GetRelationReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.getRelation(req);
     }
 
-    @GetMapping("verify")
+    @RequestMapping("verify")
     public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShip(@RequestBody @Validated VerifyFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.verifyFriendShip(req);
     }
 
-    @PutMapping("black")
+    @RequestMapping("black")
     public ResponseVO<AddFriendShipBlackResp> addFriendShipBlack(@RequestBody @Validated AddFriendShipBlackReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.blackFriendShip(req);
     }
 
-    @PutMapping("deleteBlack")
+    @RequestMapping("deleteBlack")
     public ResponseVO<DeleteFriendShipBlackResp> deleteFriendShipBlack(@RequestBody @Validated DeleteFriendShipBlackReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.deleteFriendShipBlack(req);
     }
 
-    @GetMapping("verifyBlack")
+    @RequestMapping("verifyBlack")
     public ResponseVO<List<VerifyFriendShipResp>> verifyFriendShipBlack(@RequestBody @Validated VerifyFriendShipReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipService.verifyFriendShipBlack(req);
     }
 
-    @GetMapping("syncFriendshipList")
+    @RequestMapping("syncFriendshipList")
     public ResponseVO<SyncResp<FriendShipEntity>> syncFriendshipList(@RequestBody @Validated SyncReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);

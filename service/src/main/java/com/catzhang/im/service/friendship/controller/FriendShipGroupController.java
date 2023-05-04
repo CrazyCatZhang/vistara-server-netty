@@ -22,31 +22,31 @@ public class FriendShipGroupController {
     @Autowired
     FriendShipGroupService friendShipGroupService;
 
-    @PostMapping("add")
+    @RequestMapping("add")
     public ResponseVO<AddFriendShipGroupResp> addFriendShipGroup(@RequestBody @Validated AddFriendShipGroupReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipGroupService.addFriendShipGroup(req);
     }
 
-    @DeleteMapping("delete")
+    @RequestMapping("delete")
     public ResponseVO<DeleteFriendShipGroupResp> deleteFriendShipGroup(@RequestBody @Validated DeleteFriendShipGroupReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipGroupService.deleteFriendShipGroup(req);
     }
 
-    @GetMapping("getAll")
+    @RequestMapping("getAll")
     public ResponseVO<GetAllFriendShipGroupResp> getAllFriendShipGroup(@RequestBody @Validated GetAllFriendShipGroupReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipGroupService.getAllFriendShipGroup(req);
     }
 
-    @PostMapping("/member/add")
+    @RequestMapping("/member/add")
     public ResponseVO<AddFriendShipGroupMemberResp> addFriendShipGroupMember(@RequestBody @Validated AddFriendShipGroupMemberReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipGroupMemberService.addFriendShipGroupMember(req);
     }
 
-    @DeleteMapping("/member/delete")
+    @RequestMapping("/member/delete")
     public ResponseVO<DeleteFriendShipGroupMemberResp> deleteFriendShipGroupMember(@RequestBody @Validated DeleteFriendShipGroupMemberReq req, Integer appId) {
         req.setAppId(appId);
         return friendShipGroupMemberService.deleteFriendShipGroupMember(req);

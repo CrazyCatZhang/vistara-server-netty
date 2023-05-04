@@ -10,10 +10,7 @@ import com.catzhang.im.service.conversation.model.UpdateConversationReq;
 import com.catzhang.im.service.conversation.service.ConversationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/conversation")
@@ -34,7 +31,7 @@ public class ConversationController {
         return conversationService.updateConversation(req);
     }
 
-    @GetMapping("syncConversationList")
+    @RequestMapping("syncConversationList")
     public ResponseVO<SyncResp<ConversationSetEntity>> syncConversationList(@RequestBody @Validated SyncReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);

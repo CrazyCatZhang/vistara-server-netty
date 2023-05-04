@@ -20,42 +20,42 @@ public class GroupMemberController {
     @Autowired
     GroupMemberService groupMemberService;
 
-    @PostMapping("import")
+    @RequestMapping("import")
     public ResponseVO<List<ImportGroupMemberResp>> importGroupMember(@RequestBody @Validated ImportGroupMemberReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMemberService.importGroupMember(req);
     }
 
-    @PostMapping("add")
+    @RequestMapping("add")
     public ResponseVO<List<AddMemberResp>> addMember(@RequestBody @Validated AddMemberReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMemberService.addMember(req);
     }
 
-    @DeleteMapping("remove")
+    @RequestMapping("remove")
     public ResponseVO<RemoveMemberResp> removeMember(@RequestBody @Validated RemoveMemberReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMemberService.removeMember(req);
     }
 
-    @DeleteMapping("exit")
+    @RequestMapping("exit")
     public ResponseVO<ExitGroupResp> exitGroup(@RequestBody @Validated ExitGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMemberService.exitGroup(req);
     }
 
-    @PutMapping("update")
+    @RequestMapping("update")
     public ResponseVO<UpdateGroupMemberResp> updateGroupMember(@RequestBody @Validated UpdateGroupMemberReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMemberService.updateGroupMember(req);
     }
 
-    @PutMapping("speak")
+    @RequestMapping("speak")
     public ResponseVO<SpeakMemberResp> speakMember(@RequestBody @Validated SpeakMemberReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);

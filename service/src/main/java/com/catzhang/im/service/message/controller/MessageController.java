@@ -31,13 +31,13 @@ public class MessageController {
     @Autowired
     MessageSyncService messageSyncService;
 
-    @PostMapping("/send")
+    @RequestMapping("/send")
     public ResponseVO<SendMessageResp> send(@RequestBody @Validated SendMessageReq req, Integer appId) {
         req.setAppId(appId);
         return p2PMessageService.send(req);
     }
 
-    @PostMapping("/verifySend")
+    @RequestMapping("/verifySend")
     public ResponseVO verifySend(@RequestBody @Validated VerifySendMessageReq req, Integer appId) {
         req.setAppId(appId);
         if (req.getCommand().equals(GroupEventCommand.MSG_GROUP.getCommand())) {
@@ -46,7 +46,7 @@ public class MessageController {
         return p2PMessageService.verifyImServerPermission(req.getFromId(), req.getToId(), req.getAppId());
     }
 
-    @GetMapping("syncOfflineMessage")
+    @RequestMapping("syncOfflineMessage")
     public ResponseVO<SyncResp<OfflineMessageContent>> syncOfflineMessage(@RequestBody @Validated SyncReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);

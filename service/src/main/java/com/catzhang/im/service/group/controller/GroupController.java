@@ -25,76 +25,76 @@ public class GroupController {
     @Autowired
     GroupMessageService groupMessageService;
 
-    @PostMapping("import")
+    @RequestMapping("import")
     public ResponseVO<ImportGroupResp> importGroup(@RequestBody @Validated ImportGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.importGroup(req);
     }
 
-    @PostMapping("create")
+    @RequestMapping("create")
     public ResponseVO<CreateGroupResp> createGroup(@RequestBody @Validated CreateGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.createGroup(req);
     }
 
-    @PutMapping("update")
+    @RequestMapping("update")
     public ResponseVO<UpdateGroupInfoResp> updateGroupInfo(@RequestBody @Validated UpdateGroupInfoReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.updateGroupInfo(req);
     }
 
-    @PutMapping("destroy")
+    @RequestMapping("destroy")
     public ResponseVO<DestroyGroupResp> destroyGroup(@RequestBody @Validated DestroyGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.destroyGroup(req);
     }
 
-    @PutMapping("transfer")
+    @RequestMapping("transfer")
     public ResponseVO<TransferGroupResp> transferGroup(@RequestBody @Validated TransferGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.transferGroup(req);
     }
 
-    @GetMapping("get")
+    @RequestMapping("get")
     public ResponseVO<GetGroupResp> getGroup(@RequestBody @Validated GetGroupReq req, Integer appId) {
         req.setAppId(appId);
         return groupService.getGroup(req);
     }
 
-    @PutMapping("mute")
+    @RequestMapping("mute")
     public ResponseVO<MuteGroupResp> muteGroup(@RequestBody @Validated MuteGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.muteGroup(req);
     }
 
-    @GetMapping("getJoined")
+    @RequestMapping("getJoined")
     public ResponseVO<GetJoinedGroupResp> getJoinedGroup(@RequestBody @Validated GetJoinedGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.getJoinedGroup(req);
     }
 
-    @PostMapping("add")
+    @RequestMapping("add")
     public ResponseVO<AddGroupResp> addGroup(@RequestBody @Validated AddGroupReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupService.addGroup(req);
     }
 
-    @PostMapping("sendMessage")
+    @RequestMapping("sendMessage")
     public ResponseVO<SendGroupMessageResp> sendMessage(@RequestBody @Validated SendGroupMessageReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
         return groupMessageService.send(req);
     }
 
-    @GetMapping("syncJoinedGroup")
+    @RequestMapping("syncJoinedGroup")
     public ResponseVO<SyncResp<GroupEntity>> syncJoinedGroup(@RequestBody @Validated SyncReq req, Integer appId, String identifier) {
         req.setAppId(appId);
         req.setOperator(identifier);
