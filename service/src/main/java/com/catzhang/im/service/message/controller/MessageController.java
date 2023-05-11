@@ -38,8 +38,7 @@ public class MessageController {
     }
 
     @RequestMapping("/verifySend")
-    public ResponseVO verifySend(@RequestBody @Validated VerifySendMessageReq req, Integer appId) {
-        req.setAppId(appId);
+    public ResponseVO verifySend(@RequestBody @Validated VerifySendMessageReq req) {
         if (req.getCommand().equals(GroupEventCommand.MSG_GROUP.getCommand())) {
             return groupMessageService.verifyImServerPermission(req.getFromId(), req.getToId(), req.getAppId());
         }

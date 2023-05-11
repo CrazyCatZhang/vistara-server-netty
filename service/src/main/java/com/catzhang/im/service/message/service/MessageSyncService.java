@@ -77,7 +77,7 @@ public class MessageSyncService {
     public void readMark(MessageReadedContent messageReadedContent) {
         conversationService.messageMarkRead(messageReadedContent);
         MessageReadedPack messageReadedPack = new MessageReadedPack();
-        BeanUtils.copyProperties(messageReadedPack, messageReadedPack);
+        BeanUtils.copyProperties(messageReadedContent, messageReadedPack);
         messageProducer.sendToUser(messageReadedContent.getToId(), MessageCommand.MSG_READED_RECEIPT, messageReadedPack, messageReadedContent.getAppId());
         syncToSender(messageReadedPack, messageReadedContent, MessageCommand.MSG_READED_NOTIFY);
     }
