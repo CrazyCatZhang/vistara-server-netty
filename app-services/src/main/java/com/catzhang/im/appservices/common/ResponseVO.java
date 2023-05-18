@@ -1,6 +1,6 @@
 package com.catzhang.im.appservices.common;
 
-import com.catzhang.im.common.exception.ApplicationExceptionEnum;
+import com.catzhang.im.appservices.exception.ApplicationExceptionEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

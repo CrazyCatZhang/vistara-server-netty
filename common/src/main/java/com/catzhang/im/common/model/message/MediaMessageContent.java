@@ -9,16 +9,22 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class MessageReadedContent extends ClientInfo {
+public class MediaMessageContent extends ClientInfo {
 
-    private long messageSequence;
+    private String messageId;
 
     private String fromId;
 
-    private String groupId;
-
     private String toId;
 
-    private Integer conversationType;
+    private String messageBody;
+
+    private Long messageTime;
+
+    private String extra;
+
+    private Long messageKey;
+
+    private long messageSequence;
 
 }

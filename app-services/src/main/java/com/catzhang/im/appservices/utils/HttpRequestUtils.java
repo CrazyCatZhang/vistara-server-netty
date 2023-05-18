@@ -247,8 +247,9 @@ public class HttpRequestUtils {
     public <T> T doPost(String url, Class<T> tClass, Map<String, Object> map, Map<String, Object> header, String jsonBody, String charSet) throws Exception {
 
         String result = doPost(url, map, header, jsonBody, charSet);
-        if (StringUtils.isNotEmpty(result))
+        if (StringUtils.isNotEmpty(result)) {
             return JSON.parseObject(result, tClass);
+        }
         return null;
 
     }

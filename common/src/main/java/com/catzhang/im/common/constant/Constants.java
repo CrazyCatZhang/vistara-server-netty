@@ -79,11 +79,15 @@ public class Constants {
 
         public static final String IMTOFRIENDSHIPSERVICE = "pipelineToFriendshipService";
 
+        public static final String IMTOMEDIASERVICE = "pipelineToMediaService";
+
         public static final String MESSAGESERVICETOIM = "messageServiceToPipeline";
 
         public static final String GROUPSERVICETOIM = "GroupServiceToPipeline";
 
         public static final String FRIENDSHIPTOIM = "friendShipToPipeline";
+
+        public static final String MEDIASERVICETOIM = "MediaServiceToPipeline";
 
         public static final String STOREPTOPMESSAGE = "storePToPMessage";
 

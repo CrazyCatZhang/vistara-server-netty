@@ -7,6 +7,8 @@ package com.catzhang.im.common.enums.command;
 
 public enum CommandType {
 
+    MEDIA("6"),
+
     USER("4"),
 
     FRIEND("3"),

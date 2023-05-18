@@ -33,6 +33,8 @@ public class MessageProducer {
             channelName = Constants.RabbitConstants.IMTOFRIENDSHIPSERVICE;
         } else if (commandType == CommandType.USER) {
             channelName = Constants.RabbitConstants.IMTOUSERSERVICE;
+        } else if (commandType == CommandType.MEDIA) {
+            channelName = Constants.RabbitConstants.IMTOMEDIASERVICE;
         }
         try {
             channel = MqFactory.getChannel(channelName);
@@ -62,6 +64,8 @@ public class MessageProducer {
             channelName = Constants.RabbitConstants.IMTOFRIENDSHIPSERVICE;
         } else if (commandType == CommandType.USER) {
             channelName = Constants.RabbitConstants.IMTOUSERSERVICE;
+        } else if (commandType == CommandType.MEDIA) {
+            channelName = Constants.RabbitConstants.IMTOMEDIASERVICE;
         }
 
         try {

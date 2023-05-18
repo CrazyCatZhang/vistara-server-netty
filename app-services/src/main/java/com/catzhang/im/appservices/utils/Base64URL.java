@@ -1,6 +1,8 @@
 package com.catzhang.im.appservices.utils;
-import sun.misc.BASE64Decoder;
-import sun.misc.BASE64Encoder;
+//import sun.misc.BASE64Decoder;
+//import sun.misc.BASE64Encoder;
+import java.util.Base64;
+
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -12,7 +14,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class Base64URL {
     public static byte[] base64EncodeUrl(byte[] input) {
-        byte[] base64 = new BASE64Encoder().encode(input).getBytes();
+        byte[] base64 = Base64.getEncoder().encode(input);
         for (int i = 0; i < base64.length; ++i) {
             switch (base64[i]) {
                 case '+':
@@ -32,7 +34,7 @@ public class Base64URL {
     }
 
     public static byte[] base64EncodeUrlNotReplace(byte[] input) {
-        byte[] base64 = new BASE64Encoder().encode(input).getBytes(StandardCharsets.UTF_8);
+        byte[] base64 = Base64.getEncoder().encode(input);
         for (int i = 0; i < base64.length; ++i) {
             switch (base64[i]) {
                 case '+':
@@ -67,7 +69,7 @@ public class Base64URL {
                     break;
             }
         }
-        return new BASE64Decoder().decodeBuffer(new String(input,"UTF-8"));
+        return Base64.getDecoder().decode(input);
     }
 
     public static byte[] base64DecodeUrl(byte[] input) throws IOException {
@@ -87,6 +89,6 @@ public class Base64URL {
                     break;
             }
         }
-        return new BASE64Decoder().decodeBuffer(base64.toString());
+        return Base64.getDecoder().decode(base64);
     }
 }

@@ -180,9 +180,13 @@ public class P2PMessageService {
         MessageContent message = new MessageContent();
         BeanUtils.copyProperties(req, message);
         //插入数据
-        messageStoreService.storeP2PMessage(message);
         sendMessageResp.setMessageKey(message.getMessageKey());
         sendMessageResp.setMessageTime(System.currentTimeMillis());
+        if (message.getMessageTime() == 0) {
+            message.setMessageTime(sendMessageResp.getMessageTime());
+        }
+        messageStoreService.storeP2PMessage(message);
+
 
         //2.发消息给同步在线端
         syncToSender(message);

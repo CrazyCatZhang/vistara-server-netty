@@ -13,10 +13,7 @@ import com.catzhang.im.common.ResponseVO;
 import com.catzhang.im.common.constant.Constants;
 import com.catzhang.im.common.enums.ConnectStatus;
 import com.catzhang.im.common.enums.ImConnectStatus;
-import com.catzhang.im.common.enums.command.GroupEventCommand;
-import com.catzhang.im.common.enums.command.MessageCommand;
-import com.catzhang.im.common.enums.command.SystemCommand;
-import com.catzhang.im.common.enums.command.UserEventCommand;
+import com.catzhang.im.common.enums.command.*;
 import com.catzhang.im.common.model.UserClientDto;
 import com.catzhang.im.common.model.UserSession;
 import com.catzhang.im.common.model.message.VerifySendMessageReq;
@@ -125,7 +122,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
             SessionSocketHolder.removeUserSession((NioSocketChannel) channelHandlerContext.channel());
         } else if (command == SystemCommand.PING.getCommand()) {
             channelHandlerContext.channel().attr(AttributeKey.valueOf(Constants.READTIME)).set(System.currentTimeMillis());
-        } else if (command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand()) {
+        } else if (command == MessageCommand.MSG_P2P.getCommand() || command == GroupEventCommand.MSG_GROUP.getCommand() || command == MediaEventCommand.CALL_VIDEO.getCommand() || command == MediaEventCommand.CALL_VOICE.getCommand()) {
             try {
                 String toId;
                 VerifySendMessageReq verifySendMessageReq = new VerifySendMessageReq();
@@ -133,7 +130,7 @@ public class NettyServerHandler extends SimpleChannelInboundHandler<Message> {
                 verifySendMessageReq.setAppId(message.getMessageHeader().getAppId());
                 JSONObject jsonObject = JSON.parseObject(JSONObject.toJSONString(message.getMessagePack()));
                 verifySendMessageReq.setFromId(jsonObject.getString("fromId"));
-                if (command == MessageCommand.MSG_P2P.getCommand()) {
+                if (command == MessageCommand.MSG_P2P.getCommand() || command == MediaEventCommand.CALL_VIDEO.getCommand() || command == MediaEventCommand.CALL_VOICE.getCommand()) {
                     toId = jsonObject.getString("toId");
                 } else {
                     toId = jsonObject.getString("groupId");
