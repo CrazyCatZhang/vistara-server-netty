@@ -46,7 +46,7 @@ public class CallbackController {
         String prompt = jsonObject.getString("messageBody");
         String imei = jsonObject.getString("imei");
         String toId = jsonObject.getString("toId");
-        String formId = jsonObject.getString("fromId");
+        String fromId = jsonObject.getString("fromId");
         if ("message.send.after".equals(command) && "ChatGPT".equals(toId)) {
             Proxy proxy = Proxys.socks5("127.0.0.1", 7890);
             ChatGPTStream chatGPTStream = ChatGPTStream.builder()
@@ -71,7 +71,7 @@ public class CallbackController {
                 SendMessageProto proto = new SendMessageProto();
                 proto.setImei(imei);
                 proto.setFromId(toId);
-                proto.setToId(formId);
+                proto.setToId(fromId);
                 proto.setClientType(1);
                 proto.setMessageBody(JSONObject.toJSONString(new MessageBody(1, msg)));
 
